@@ -14,8 +14,8 @@ different code agents.
 Many AI code agents now have adopted the [`AGENTS.md`](https://agents.md)
 convention for providing guidance for agents. For such agents, you can simply:
 
-1. Copy `Agents.mbt.md` into your project directory and require Codex to read it
-   in the `AGENTS.md` file.
+1. Copy `Agents.mbt.md` into your project directory and require code agent to
+   read it in the `AGENTS.md` file.
 2. Append the content of `Agents.mbt.md` to your existing `AGENTS.md` file.
 
 ### Claude Code
@@ -77,8 +77,22 @@ See <https://docs.cursor.com/en/context/rules> for more details.
 
 ### Gemini CLI
 
-[Gemini-CLI](https://github.com/google-gemini/gemini-cli) can be configured to
-use `AGENTS.md` files, as per <https://agents.md>:
+[Gemini-CLI](https://github.com/google-gemini/gemini-cli) reads from `GEMINI.md`
+files for user-level/repository-specific instructions/contexts. Since
+it supports `@` memory import, we suggest copying `Agents.mbt.md` into your
+project directory and mention it in `GEMINI.md`. For example, suppose you
+copied `Agents.mbt.md` to your project directory as `moonbit.mbt.md`, then you
+can add the following line to your `GEMINI.md` file:
+
+```markdown
+# MoonBit Language Reference
+- @moonbit.mbt.md
+```
+
+See [Memory Import Processor](https://github.com/google-gemini/gemini-cli/blob/1634d5fcca29e7c64d37f99e17e42d303e12062d/docs/core/memport.md) for more information.
+
+Also, Gemini-CLI can be configured to use `AGENTS.md` files, as per
+<https://agents.md>:
 
 > **How do I configure Gemini CLI?**
 >
@@ -88,10 +102,19 @@ use `AGENTS.md` files, as per <https://agents.md>:
 > { "contextFileName": "AGENTS.md" }
 > ```
 
-Also, one can also use `GEMINI.md` file in a pretty-much the same way as
-`AGENTS.md`.
-
 ### GitHub Copilot
 
 [GitHub Copilot](https://github.com/features/copilot) supports `AGENTS.md`
 files. See the [`AGENTS.md`](#agentsmd) section above for details.
+
+When working with multi-language projects, you may want to limit the scope
+of the system prompt to specifically MoonBit-related files. You can do this by
+creating a `.github/instructions/moonbit.instructions.md` file with the
+following content:
+
+```markdown
+---
+applyTo: "**/*.mbt,**/*.mbti,**/moon.mod.json,**/moon.pkg.json,**/*.mbt.md"
+---
+[Content of Agents.mbt.md]
+```
