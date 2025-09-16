@@ -841,7 +841,7 @@ my_module
 
 ## Essential Commands
 
-- `moon new my-project` - Create new project
+- `moon new my_project` - Create new project
 - `moon run cmd/main` - Run main package
 - `moon build` - Build project
 - `moon check` - Type check without building
