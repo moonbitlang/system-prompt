@@ -1150,4 +1150,3 @@ Practical testing guidance for MoonBit. Keep tests black-box by default and rely
 - Panics: Name test with prefix `test "panic ..." {...}`; if the call returns a value, wrap it with `ignore(...)` to silence warnings.
 - Errors: Use `try? f()` to get `Result[...]` and `inspect` it when a function may raise.
 - Verify: Run `moon test` (or `-u` to update snapshots) and `moon fmt` afterwards.
-- Tools: Use <add_moonbit_test/> to auto‑generate tests for low‑coverage files; <get_moonbit_mbti/> to read public APIs; <get_moonbit_coverage/> to confirm improvements.
