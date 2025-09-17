@@ -6,22 +6,23 @@ over MoonBit projects.
 
 ## How to use
 
-We provide some instructions on how to use the MoonBit System Prompt in
+The simplest way is to reference the file and ask the AI to read it in the prompt.
+
+Here we provide some extra instructions on how to use the MoonBit System Prompt in
 different code agents.
 
 ### AGENTS.md
 
 Many AI code agents now have adopted the [`AGENTS.md`](https://agents.md)
-convention for providing guidance for agents. For such agents, you can simply:
+convention for providing guidance for agents. For such agents, you may:
 
-1. Copy `Agents.mbt.md` into your project directory and require code agent to
-   read it in the `AGENTS.md` file.
-2. Append the content of `Agents.mbt.md` to your existing `AGENTS.md` file.
+- Copy `Agents.mbt.md` into your project directory as `AGENTS.md`
+- Append the content of `Agents.mbt.md` to your existing `AGENTS.md` file.
 
 ### Claude Code
 
 [Claude Code](https://www.anthropic.com/claude-code) supports `CLAUDE.md` file.
-Since `CLAUDE.md` supports `@path/to/import` syntax, we suggest coping
+Since `CLAUDE.md` supports `@path/to/import` syntax, we suggest copying
 `Agents.mbt.md` into your project directory and mention it in `CLAUDE.md`. For
 example, suppose you copied `Agents.mbt.md` to your project directory as
 `moonbit.mbt.md`, then you can add the following line to your `CLAUDE.md` file:
@@ -31,14 +32,12 @@ example, suppose you copied `Agents.mbt.md` to your project directory as
 - @moonbit.mbt.md
 ```
 
+See [Memory Management](https://docs.claude.com/en/docs/claude-code/memory)
+on detailed configuration.
+
 ### Codex CLI
 
-Codex CLI supports [`AGENTS.md`](https://agents.md). You can either:
-
-1. Copy `Agents.mbt.md` into your project directory and require Codex to read it
-   in the `AGENTS.md` file.
-2. Append the content of `Agents.mbt.md` to your existing `AGENTS.md` file.
-
+Codex CLI supports [`AGENTS.md`](https://agents.md).
 Quoted from [openai/codex/docs/getting-started.md](https://github.com/openai/codex/blob/main/docs/getting-started.md#memory-with-agentsmd):
 
 > You can give Codex extra instructions and guidance using `AGENTS.md` files.
@@ -57,9 +56,9 @@ Quoted from [openai/codex/docs/getting-started.md](https://github.com/openai/cod
 [Cursor](https://cursor.com/) supports `AGENTS.md` files. See the
 [`AGENTS.md`](#agentsmd) section above for details.
 
-Also, one can use the `.cursor/rules` functionality of Cursor to include the
-content of `Agents.mbt.md` file. You copied `Agents.mbt.md` to your project
-directory as `.cursor/rules/moonbit.mdc`, and configure ways to include the
+Also, one can use [rules](https://docs.cursor.com/en/context/rules) to include the
+content of `Agents.mbt.md` file. For project rule, you can copy `Agents.mbt.md`
+to `.cursor/rules/moonbit.mdc`, and configure ways to include the
 context in the front-matter of `.cursor/rules/moonbit.mdc`. For example:
 
 ```markdown
@@ -102,10 +101,9 @@ Also, Gemini-CLI can be configured to use `AGENTS.md` files, as per
 > { "contextFileName": "AGENTS.md" }
 > ```
 
-### GitHub Copilot
+### GitHub Copilot for VS Code
 
-[GitHub Copilot](https://github.com/features/copilot) supports `AGENTS.md`
-files. See the [`AGENTS.md`](#agentsmd) section above for details.
+VS Code Copilot [experimentally supports `AGENTS.md`](https://code.visualstudio.com/docs/copilot/customization/custom-instructions#_use-an-agentsmd-file-experimental).
 
 When working with multi-language projects, you may want to limit the scope
 of the system prompt to specifically MoonBit-related files. You can do this by
