@@ -84,13 +84,13 @@ test "everything is expression in MoonBit" {
   let (n, opt) = (1, MySome(2))
   // if expressions return values
   let msg : String = if n > 0 { "pos" } else { "non-pos" }
-  let res= match opt {
+  let res = match opt {
     MySome(x) => {
       inspect(x, content="2")
       1
     }
     MyNone => 0
-  }        
+  }
   let status = Ok(10)
   // match expressions return values
   let description = match status {
@@ -109,10 +109,9 @@ test "everything is expression in MoonBit" {
   } else { // Value when loop completes normally
     None
   }
-  assert_eq(found, Some(2))  // Found at index 2
-  ... 
+  assert_eq(found, Some(2)) // Found at index 2
+  ...
 }
-
 
 ///|
 /// global bindings
@@ -128,7 +127,6 @@ pub fn maximum(xs : Array[Int]) -> Int raise {
   //  Only add `raise XXError` when you do need track the specific error type
   match xs {
     [] => fail("Empty array") // fail() is built-in for generic errors
-
     [x] => x
     // pattern match over array, the `.. rest` is a rest pattern
     // it is of type `ArrayView[Int]` which is a slice
@@ -149,7 +147,7 @@ pub fn maximum(xs : Array[Int]) -> Int raise {
 pub(all) struct Point {
   x : Int
   mut y : Int
-} derive (Show, ToJson)
+} derive(Show, ToJson)
 
 ///|
 pub enum MyResult[T, E] {
@@ -172,7 +170,7 @@ test "inspect test" {
   // The `content` can be auto-corrected by running `moon test --update`  
   let point = Point::{ x: 10, y: 20 }
   // For complex structures, use @json.inspect for better readability:
-  @json.inspect(point, content={"x":10,"y":20})
+  @json.inspect(point, content={ "x": 10, "y": 20 })
 }
 ```
 
@@ -186,10 +184,11 @@ MoonBit's String is immutable utf16 encoded, `s[i]` returns an integer (code uni
 Since MoonBit supports char literal overloading, you can write code snippets like this:
 
 ```moonbit
-test "String indexing"{
+///|
+test "String indexing" {
   let s = "hello world"
   // Direct indexing with char literals (char literals are overloaded to Int in this context)
-  let  b0 = s[0] == '\n' || s[0] is ('h'|'b') || s[0] is ('a'..='z')
+  let b0 = s[0] == '\n' || s[0] is ('h' | 'b') || s[0] is ('a'..='z')
   // In check mode (expression with explicit type), ('\n' : Int) is valid.
   // Here the compiler knows `s[i]` is Int
 
@@ -212,14 +211,14 @@ MoonBit uses `\{}` for string interpolation:
 let point : Point = { x: 10, y: 20 }
 
 ///|
-test "String interpolation"{
+test "String interpolation" {
   let name : String = "Moon"
-  let config = {"cache" : 123}
+  let config = { "cache": 123 }
   let version = 1.0
-  let message = "Hello \{name} v\{version}"  // "Hello Moon v1.0"
-  let desc = "Point at \{point}"  // Uses point.to_string()
+  let message = "Hello \{name} v\{version}" // "Hello Moon v1.0"
+  let desc = "Point at \{point}" // Uses point.to_string()
   // Works with any type implementing Show
-  
+
   // ❌ Wrong - quotes inside interpolation not allowed:
   // println("  - Checking if 'cache' section exists: \{config["cache"]}")
 
@@ -235,6 +234,7 @@ test "String interpolation"{
 #### Multiple line strings
 
 ```moonbit
+///|
 test "multiple line strings" {
   let multi_line_string : String =
     #|Hello
@@ -268,10 +268,12 @@ From String to StringView using `s[:]`, from StringView to String using `s.to_st
 returns a `Byte`.
 
 ```moonbit
+///|
 test "bytes literal" {
   let b0 : Bytes = b"abcd"
   let b1 : Bytes = "abcd" // b is optional, when we know the type
-  let b2 : Bytes = [0xff, 0x00, 0x01] // this also works
+  let b2 : Bytes = [0xff, 0x00, 0x01]
+  // this also works
 }
 ```
 
@@ -282,9 +284,11 @@ From Bytes to BytesView using `b[:]`, from BytesView to Bytes using `b.to_bytes(
 MoonBit Array is resizable array, FixedArray is fixed size array.
 
 ```moonbit
+///|
 test "array literal" {
-  let a0 : Array[Int] = [1, 2, 3]  // resizable
+  let a0 : Array[Int] = [1, 2, 3] // resizable
   let a1 : FixedArray[Int] = [1, 2, 3]
+
 }
 ```
 
@@ -300,6 +304,7 @@ JavaScript's Map):
 ///|
 /// Map literal syntax
 let map : Map[String, Int] = { "a": 1, "b": 2, "c": 3 }
+
 ///|
 // Empty map
 let empty : Map[String, Int] = Map::new()
@@ -312,18 +317,18 @@ let from_pairs : Map[String, Int] = Map::from_array([("x", 1), ("y", 2)])
 test "map operations" {
   // Set/update value
   map["new-key"] = 3
-  map["a"] = 10  // Updates existing key
+  map["a"] = 10 // Updates existing key
 
   // Get value - returns Option[T]
   assert_eq(map.get("new-key"), Some(3))
   assert_eq(map.get("missing"), None)
 
   // Direct access (panics if key missing)
-  let value : Int = map["a"]  // value = 10
+  let value : Int = map["a"] // value = 10
 
   // Iteration preserves insertion order
   for k, v in map {
-    println("\{k}: \{v}")  // Prints: a: 10, b: 2, c: 3, new-key: 3
+    println("\{k}: \{v}") // Prints: a: 10, b: 2, c: 3, new-key: 3
   }
 
   // Other common operations
@@ -339,6 +344,7 @@ MoonBit supports Byte, Int, UInt, Int64, UInt64, etc. When the type is known,
 the literal can be overloaded:
 
 ```moonbit
+///|
 test "int and char literal" {
   let a0 : Int = 1
   let a1 : UInt = 1
@@ -347,6 +353,7 @@ test "int and char literal" {
   let a4 : Byte = 3
   let a5 : Int = 'b' // this also works, a will be the unicode value
   let a6 : Char = 'b'
+
 }
 ```
 
@@ -359,11 +366,11 @@ typealias Int as UserId // Int is aliased to UserId - no runtime overhead
 
 ///|
 ///  Tuple-struct for callback
-struct Handler ((String) -> Unit) // A newtype wrapper
+struct Handler((String) -> Unit) // A newtype wrapper
 
 ///|
 /// Tuple-struct syntax for single-field newtypes
-struct Meters(Int)  // Tuple-struct syntax
+struct Meters(Int) // Tuple-struct syntax
 
 ///|
 let distance : Meters = Meters(100)
@@ -383,17 +390,19 @@ let config : Addr = {
   // `Type::` can be omitted if the type is already known
   // otherwise `Type::{...}`
   host: "localhost",
-  port: 8080
+  port: 8080,
 }
 
 ///|
 /// Recursive enum for trees
 enum Tree[T] {
   Leaf(T)
-  Node(left~: Tree[T], T, right~:Tree[T]) // enum can use labels
+  Node(left~ : Tree[T], T, right~ : Tree[T]) // enum can use labels
 }
 
 // Pattern match on enum variants
+
+///|
 fn sum_tree(tree : Tree[Int]) -> Int {
   match tree {
     Leaf(x) => x
@@ -416,13 +425,13 @@ struct Counter {
 
 ///|
 fn increment(c : Counter) -> Unit {
-  c.value += 1  // Modifies the original
+  c.value += 1 // Modifies the original
 }
 
 ///|
 /// Arrays and Maps are mutable references
 fn modify_array(arr : Array[Int]) -> Unit {
-  arr[0] = 999  // Modifies original array
+  arr[0] = 999 // Modifies original array
 }
 
 ///|
@@ -432,11 +441,12 @@ fn swap_values(a : Ref[Int], b : Ref[Int]) -> Unit {
   a.val = b.val
   b.val = temp
 }
+
 ///|
 test "ref swap" {
   let x : Ref[Int] = Ref::new(10)
   let y : Ref[Int] = Ref::new(20)
-  swap_values(x, y)  // x.val is now 20, y.val is now 10
+  swap_values(x, y) // x.val is now 20, y.val is now 10
 }
 ```
 
@@ -460,7 +470,7 @@ fn process_array(arr : Array[Int]) -> String {
 test "record destructuring" {
   // Guards and destructuring
   let _s = match point {
-    { x: 0, y: 0} => "origin"
+    { x: 0, y: 0 } => "origin"
     { x, y } if x == y => "on diagonal"
     { x, .. } if x < 0 => "left side"
     _ => "other"
@@ -485,12 +495,13 @@ fn is_palindrome(s : StringView) -> Bool {
 The `loop` construct is unique to MoonBit:
 
 ```moonbit
-///| Functional loop with pattern matching on loop variables
+///|
+/// Functional loop with pattern matching on loop variables
 /// @list.List is from the standard library
 fn sum_list(list : @list.List[Int]) -> Int {
   loop (list, 0) {
-    (Empty, acc) => acc  // Base case returns accumulator
-    (More(x, tail=rest), acc) => continue (rest, x + acc)  // Recurse with new values
+    (Empty, acc) => acc // Base case returns accumulator
+    (More(x, tail=rest), acc) => continue (rest, x + acc) // Recurse with new values
   }
 }
 
@@ -502,11 +513,11 @@ fn find_pair(arr : Array[Int], target : Int) -> (Int, Int)? {
     (i, j) => {
       let sum = arr[i] + arr[j]
       if sum == target {
-        Some((i, j))  // Found pair
+        Some((i, j)) // Found pair
       } else if sum < target {
-        continue (i + 1, j)  // Move left pointer
+        continue (i + 1, j) // Move left pointer
       } else {
-        continue (i, j - 1)  // Move right pointer
+        continue (i, j - 1) // Move right pointer
       }
     }
   }
@@ -520,6 +531,7 @@ fn find_pair(arr : Array[Int], target : Int) -> (Int, Int)? {
 `for` loops have unique MoonBit features:
 
 ```moonbit
+///|
 test "functional for loop" {
   // For loop with multiple loop variables, 
   // i and j are loop state
@@ -551,23 +563,25 @@ type Window
 
 ///|
 fn create_window(
-  title~ : String,  // Required labeled parameter
-  width? : Int = 800,      // Optional labeled parameter with default
+  title~ : String, // Required labeled parameter
+  width? : Int = 800, // Optional labeled parameter with default
   height? : Int = 600,
-  resizable? : Bool = true
+  resizable? : Bool = true,
 ) -> Window {
   ... // `...` is a valid placeholder in MoonBit
 }
+
+///|
 test "use function with label and optional parameter" {
-   // Call with named arguments in any order
+  // Call with named arguments in any order
   let win1 : Window = create_window(title="App", height=400, width=1024)
   let win2 : Window = create_window(title="Dialog", resizable=false)
   // Pun syntax for named arguments
   let width = 1920
   let height = 1080
-  let win3 : Window = create_window(title="Fullscreen", width~, height~)  // Same as width=width, height=height
+  let win3 : Window = create_window(title="Fullscreen", width~, height~)
+  // Same as width=width, height=height
 }
-
 ```
 
 
@@ -581,8 +595,10 @@ MoonBit uses **checked** error-throwing functions, not unchecked exceptions:
 ///|
 ///  Declare error types with 'suberror'
 suberror ValueError String
+
 ///|
-struct Position(Int,Int) derive(ToJson,Show,Eq)
+struct Position(Int, Int) derive(ToJson, Show, Eq)
+
 ///|
 pub(all) suberror ParseError {
   InvalidChar(Position, Char)
@@ -602,17 +618,21 @@ fn parse_int(s : String) -> Int raise ParseError {
 }
 
 ///|
-fn div(x : Int, y : Int) -> Int raise  { 
-    if y == 0 {
-        raise Failure("Division by zero")
-    }
-    x / y
+fn div(x : Int, y : Int) -> Int raise {
+  if y == 0 {
+    raise Failure("Division by zero")
+  }
+  x / y
 }
 
 ///|
 test "inspect raise function" {
-   inspect(try? div(1, 0), content = (#|Err(Failure("Division by zero"))
-   ))   // Result[Int, MyError]
+  inspect(
+    try? div(1, 0),
+    content=(
+      #|Err(Failure("Division by zero"))
+    ),
+  ) // Result[Int, MyError]
 }
 
 // Three ways to handle errors:
@@ -620,7 +640,7 @@ test "inspect raise function" {
 ///|
 /// Propagate automatically
 fn use_parse() -> Int raise ParseError {
-  let x = parse_int("123") 
+  let x = parse_int("123")
   // Error *auto* propagates by default.
   // *unlike* Swift, you don't need mark `try` for functions that can raise errors,
   // compiler infers it automatically. This makes error-handling code cleaner
@@ -639,28 +659,26 @@ fn use_parse2() -> Int raise {
 ///|
 ///  Convert to Result with try?
 fn safe_parse(s : String) -> Result[Int, ParseError] {
-  let val1: Result[_]  = try? parse_int(s)  // Returns Result[Int, ParseError]
+  let val1 : Result[_] = try? parse_int(s) // Returns Result[Int, ParseError]
   // try! is rarely used - it panics on error, similar to unwrap() in Rust
   // let val2 : Int = try! parse_int(s) // Returns Int otherwise crash
-  
+
   // Alternative explicit handling:
   let val3 = try parse_int(s) catch {
     err => Err(err)
   } noraise { // noraise block is optional - handles the success case
     v => Ok(v)
   }
-  ... 
+  ...
 }
 
 ///|
 ///  3. Handle with try-catch
 fn handle_parse(s : String) -> Int {
-  try {
-    parse_int(s)
-  } catch {
+  parse_int(s) catch {
     ParseError::InvalidEof => {
       println("Parse failed: InvalidEof")
-      -1  // Default value
+      -1 // Default value
     }
     _ => 2
   }
@@ -684,7 +702,8 @@ fn Rectangle::area(self : Rectangle) -> Double {
   self.width * self.height
 }
 
-// Static methods don't need self
+///|
+/// Static methods don't need self
 fn Rectangle::new(w : Double, h : Double) -> Rectangle {
   { width: w, height: h }
 }
@@ -692,24 +711,27 @@ fn Rectangle::new(w : Double, h : Double) -> Rectangle {
 ///|
 /// Show trait now uses output(self, logger) for custom formatting
 /// to_string() is automatically derived from this
-pub impl Show for Rectangle with output(self,logger) {
+pub impl Show for Rectangle with output(self, logger) {
   logger.write_string("Rectangle(\{self.width}x\{self.height})")
 }
 
-// Traits can have non-object-safe methods
+///|
+/// Traits can have non-object-safe methods
 trait Named {
-  name() -> String  // No 'self' parameter - not object-safe
+  name() -> String // No 'self' parameter - not object-safe
 }
 
-// Trait bounds in generics
+///|
+/// Trait bounds in generics
 fn[T : Show + Named] describe(value : T) -> String {
   "\{T::name()}: \{value.to_string()}"
 }
 
 ///|
 ///  Trait implementation
-impl Hash for Rectangle with hash_combine(self, hasher) { hasher..combine(self.width)..combine(self.height) }
-
+impl Hash for Rectangle with hash_combine(self, hasher) {
+  hasher..combine(self.width)..combine(self.height)
+}
 ```
 
 ## Operator Overloading
@@ -718,7 +740,7 @@ MoonBit supports operator overloading through traits:
 
 ```moonbit
 ///|
-struct Vector (Int,Int)
+struct Vector(Int, Int)
 
 ///|
 /// Implement arithmetic operators
@@ -746,10 +768,9 @@ pub impl Compare for Person with compare(self, other) {
 test "overloading" {
   let v1 : Vector = Vector(1, 2)
   let v2 : Vector = Vector(3, 4)
-
   let _v3 : Vector = v1 + v2
 
-} 
+}
 ```
 
 ## Access Control Modifiers
@@ -759,31 +780,35 @@ MoonBit has fine-grained visibility control:
 ```moonbit
 ///|
 /// `fn` defaults to Private - only visible in current package
-fn internal_helper() -> Unit { ... }
+fn internal_helper() -> Unit {
+  ...
+}
 
 ///|
-pub fn get_value() -> Int { ... }
+pub fn get_value() -> Int {
+  ...
+}
 
 ///|
 // Struct (default) - type visible, implementation hidden
-struct DataStructure {  }
+struct DataStructure {}
 
 ///|
 /// `pub struct` defaults to readonly - can read, pattern match, but not create
-pub struct Config {  }
+pub struct Config {}
 
 ///|
 ///  Public all - full access
-pub(all) struct Config2 {  }
+pub(all) struct Config2 {}
 
 ///|
 /// Abstract trait (default) - cannot be implemented by
 /// types outside this package
-pub trait MyTrait {  }
+pub trait MyTrait {}
 
 ///|
 ///  Open for extension
-pub(open) trait Extendable {  }
+pub(open) trait Extendable {}
 ```
 
 
@@ -1045,6 +1070,7 @@ Embed external files as MoonBit code:
 Generated code example:
 
 ```moonbit
+///|
 let data : String =
   #|hello,
   #|world
