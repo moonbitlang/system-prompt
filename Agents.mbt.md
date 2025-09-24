@@ -1176,3 +1176,111 @@ Practical testing guidance for MoonBit. Keep tests black-box by default and rely
 - Panics: Name test with prefix `test "panic ..." {...}`; if the call returns a value, wrap it with `ignore(...)` to silence warnings.
 - Errors: Use `try? f()` to get `Result[...]` and `inspect` it when a function may raise.
 - Verify: Run `moon test` (or `-u` to update snapshots) and `moon fmt` afterwards.
+
+## Code Navigation with `moon ide`
+
+**ALWAYS use `moon ide` for code navigation in MoonBit projects instead of manual file searching, grep, or semantic search.**
+
+This tool provides two essential commands for precise code exploration:
+
+### Core Commands
+
+- `moon ide goto-definition` - Find where a symbol is defined
+- `moon ide find-references` - Find all usages of a symbol
+
+### Query System
+
+Symbol lookup uses a three-part query system for precise results:
+
+#### 1. Symbol Name Query (`-query`)
+
+Fuzzy search for symbol names with these patterns:
+
+```bash
+# Find any symbol named 'symbol'
+moon ide goto-definition -query 'symbol'
+
+# Find methods of a specific type
+moon ide goto-definition -query 'Type::method'
+
+# Find trait method implementations
+moon ide goto-definition -query 'Trait for Type with method'
+```
+
+**Supported symbols**: functions, constants, let bindings, types, structs, enums, traits
+
+#### 2. Tag-based Filtering (`-tag-query`)
+
+Pre-filter symbols by characteristics before name matching:
+
+**Visibility tags**:
+- `pub` - Public symbols
+- `pub all` - Public structs with all public fields
+- `pub open` - Public traits with all methods public
+- `priv` - Private symbols
+
+**Symbol type tags**:
+- `type` - Type definitions (struct, enum, typealias, abstract)
+- `error` - Error type definitions
+- `enum` - Enum definitions and variants
+- `struct` - Struct definitions
+- `alias` - Type/function/trait aliases
+- `let` - Top-level let bindings
+- `const` - Constant definitions
+- `fn` - Function definitions
+- `trait` - Trait definitions
+- `impl` - Trait implementations
+- `test` - Named test functions
+
+**Combine tags with logical operators**:
+
+```bash
+# Public functions only
+moon ide goto-definition -tag-query 'pub fn' -query 'my_func'
+
+# Functions or constants
+moon ide goto-definition -tag-query 'fn | const' -query 'helper'
+
+# Public functions or constants
+moon ide goto-definition -tag-query 'pub (fn | const)' -query 'api'
+
+# Public types or traits
+moon ide goto-definition -tag-query 'pub (type | trait)' -query 'MyType'
+```
+
+#### 3. Package Scope (`-pkg-query`)
+
+Filter by package name to narrow search scope:
+
+```bash
+# Find symbols in specific package
+moon ide goto-definition -pkg-query 'moonbitlang/x' -query 'encode'
+
+# Find in nested package
+moon ide goto-definition -pkg-query 'username/mymodule/mypkg' -query 'helper'
+```
+
+### Practical Examples
+
+```bash
+# Find public function definition
+moon ide goto-definition -tag-query 'pub fn' -query 'maximum'
+
+# Find all references to a struct
+moon ide find-references -tag-query 'struct' -query 'Rectangle'
+
+# Find trait implementations
+moon ide goto-definition -tag-query 'impl' -query 'Show for MyType'
+
+# Find errors in specific package
+moon ide goto-definition -tag-query 'error' -pkg-query 'mymodule/parser' -query 'ParseError'
+```
+
+### Query Processing
+
+The tool processes queries in this order:
+1. Filter symbols by `-tag-query` conditions
+2. Fuzzy match remaining symbols by `-query` and `-pkg-query`
+3. Return top 3 best matches with location information
+
+**Best Practice**: Start with tag queries to reduce noise, then refine with symbol and package names for precise navigation.
