@@ -174,25 +174,26 @@ test "inspect test" {
 }
 ```
 
+## Integers, Char
 
-## Basic Types
+MoonBit supports Byte, Int, UInt, Int64, UInt64, etc. When the type is known,
+the literal can be overloaded:
 
-### View Types Concept
+```moonbit
+///|
+test "int and char literal" {
+  let a0 : Int = 1
+  let a1 : UInt = 1
+  let a2 : Int64 = 1
+  let a3 : UInt64 = 1
+  let a4 : Byte = 3
+  let a5 : Int = 'b' // this also works, a will be the unicode value
+  let a6 : Char = 'b'
 
-**Key Concept**: View types (`StringView`, `BytesView`, `ArrayView[T]`) are zero-copy, non-owning slices created with the `[:]` syntax. They don't allocate memory and are ideal for passing sub-sequences without copying data.
+}
+```
 
-- `String` → `StringView` via `s[:]` or `s[start:end]`
-- `Bytes` → `BytesView` via `b[:]` or `b[start:end]`
-- `Array[T]` → `ArrayView[T]` via `a[:]` or `a[start:end]`
-
-**When to use views**:
-- Pattern matching with rest patterns (`[first, .. rest]`)
-- Passing slices to functions without allocation overhead
-- Avoiding unnecessary copies of large sequences
-
-Convert back with `.to_string()`, `.to_bytes()`, or `.to_array()` when you need ownership.
-
-### String, StringView, Bytes, BytesView
+## String
 
 MoonBit's String is immutable utf16 encoded, `s[i]` returns an integer (code units),
 `s.get(i)` returns `Option[Int]`, `s.get_char(i)` returns `Option[Char]`. 
@@ -265,36 +266,19 @@ test "multiple line strings" {
   )
 }
 ```
+## Bytes
 
-### StringView
-
-StringView is an immutable view of a String, obtained using `s[:]`. It
-is mostly the same as String, except it does not own the memory.
-
-**Important**: `s[a:b]` may raise an error at surrogate boundaries (UTF-16 encoding edge case). You have two options:
-- Use `try! s[a:b]` if you're certain the boundaries are valid (crashes on invalid boundaries)
-- Let the error propagate to the caller for proper handling
-
-From String to StringView using `s[:]`, from StringView to String using `s.to_string()`.
-
-### Bytes, BytesView
-
-`Bytes` is immutable; use `BytesView` (`b[:]`) for slices. Indexing (`b[i]`)
-returns a `Byte`.
+Bytes is immutable; Indexing (`b[i]`) returns a `Byte`.
 
 ```moonbit
 ///|
 test "bytes literal" {
   let b0 : Bytes = b"abcd"
-  let b1 : Bytes = "abcd" // b is optional, when we know the type
-  let b2 : Bytes = [0xff, 0x00, 0x01]
-  // this also works
+  let b1 : Bytes = "abcd" // b" prefix is optional, when we know the type
+  let b2 : Bytes = [0xff, 0x00, 0x01] // Array literal overloading
 }
 ```
-
-From Bytes to BytesView using `b[:]`, from BytesView to Bytes using `b.to_bytes()`.
-
-### Array, ArrayView
+## Array
 
 MoonBit Array is resizable array, FixedArray is fixed size array.
 
@@ -302,17 +286,12 @@ MoonBit Array is resizable array, FixedArray is fixed size array.
 ///|
 test "array literal" {
   let a0 : Array[Int] = [1, 2, 3] // resizable
-  let a1 : FixedArray[Int] = [1, 2, 3]
-
+  let a1 : FixedArray[Int] = [1, 2, 3] // Array literal overloading
 }
 ```
+## Map
 
-You can get ArrayView using `a[:]`, it does not allocate which is similar to
-`StringView` and `BytesView`.
-
-### Map
-
-MoonBit provides a built-in `Map` type that preserves insertion order (like
+A built-in `Map` type that preserves insertion order (like
 JavaScript's Map):
 
 ```moonbit
@@ -322,7 +301,7 @@ let map : Map[String, Int] = { "a": 1, "b": 2, "c": 3 }
 
 ///|
 // Empty map
-let empty : Map[String, Int] = Map::new()
+let empty : Map[String, Int] = {}
 
 ///|
 /// From array of pairs
@@ -353,24 +332,26 @@ test "map operations" {
 }
 ```
 
-### Ints, Char
+## View Types 
 
-MoonBit supports Byte, Int, UInt, Int64, UInt64, etc. When the type is known,
-the literal can be overloaded:
+**Key Concept**: View types (`StringView`, `BytesView`, `ArrayView[T]`) are zero-copy, non-owning read-only slices created with the `[:]` syntax. They don't allocate memory and are ideal for passing sub-sequences without copying data.
 
-```moonbit
-///|
-test "int and char literal" {
-  let a0 : Int = 1
-  let a1 : UInt = 1
-  let a2 : Int64 = 1
-  let a3 : UInt64 = 1
-  let a4 : Byte = 3
-  let a5 : Int = 'b' // this also works, a will be the unicode value
-  let a6 : Char = 'b'
+- `String` → `StringView` via `s[:]` or `s[start:end]`
+- `Bytes` → `BytesView` via `b[:]` or `b[start:end]`
+- `Array[T]` → `ArrayView[T]` via `a[:]` or `a[start:end]`
 
-}
-```
+**Important**: StringView slice is slightly different due to unicode safety:
+`s[a:b]` may raise an error at surrogate boundaries (UTF-16 encoding edge case). You have two options:
+- Use `try! s[a:b]` if you're certain the boundaries are valid (crashes on invalid boundaries)
+- Let the error propagate to the caller for proper handling
+
+**When to use views**:
+- Pattern matching with rest patterns (`[first, .. rest]`)
+- Passing slices to functions without allocation overhead
+- Avoiding unnecessary copies of large sequences
+
+Convert back with `.to_string()`, `.to_bytes()`, or `.to_array()` when you need ownership.
+
 
 ## Complex Types
 
