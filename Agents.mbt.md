@@ -334,7 +334,7 @@ test "map operations" {
   // Other common operations
   map.remove("b")
   assert_eq(map.contains("b"), false)
-  assert_eq(map.size(), 3)
+  assert_eq(map.length(), 3)
 }
 ```
 
