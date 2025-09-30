@@ -964,6 +964,11 @@ Packages per directory, packages without `moon.pkg.json` are not recognized.
 - **Package reference**: Use `@packagename` in test files to reference the
   tested package
 
+**Package Alias Rules**:
+- Import `"username/hello/liba"` → use `@liba.function()` (default alias is last path segment)
+- Import with custom alias `{"path": "moonbitlang/x/encoding", "alias": "enc"}` → use `@enc.function()`
+- In `_test.mbt` or `_wbtest.mbt` files, the package being tested is auto-imported
+
 Example:
 
 ```
