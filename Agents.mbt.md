@@ -177,6 +177,21 @@ test "inspect test" {
 
 ## Basic Types
 
+### View Types Concept
+
+**Key Concept**: View types (`StringView`, `BytesView`, `ArrayView[T]`) are zero-copy, non-owning slices created with the `[:]` syntax. They don't allocate memory and are ideal for passing sub-sequences without copying data.
+
+- `String` → `StringView` via `s[:]` or `s[start:end]`
+- `Bytes` → `BytesView` via `b[:]` or `b[start:end]`
+- `Array[T]` → `ArrayView[T]` via `a[:]` or `a[start:end]`
+
+**When to use views**:
+- Pattern matching with rest patterns (`[first, .. rest]`)
+- Passing slices to functions without allocation overhead
+- Avoiding unnecessary copies of large sequences
+
+Convert back with `.to_string()`, `.to_bytes()`, or `.to_array()` when you need ownership.
+
 ### String, StringView, Bytes, BytesView
 
 MoonBit's String is immutable utf16 encoded, `s[i]` returns an integer (code units),
