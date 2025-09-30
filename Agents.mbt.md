@@ -546,7 +546,7 @@ test "functional for loop" {
   inspect(sum_result, content="55")
 
   // special form with condition and state update in the `for` header
-  let sum_result2 : Int = for i = 0, sum = 0; i <= 100; i = i + 1, sum = sum + i {
+  let sum_result2 : Int = for i = 0, sum = 0; i <= 10; i = i + 1, sum = sum + i {
 
   } else {
     sum
@@ -1155,7 +1155,7 @@ The MoonBit code in docstring will be type checked and tested automatically.
 
 ## MoonBit Package `README` Generation Guide
 
-- Output `README.mbt.md` in the package directory; `*.mbt.md` files including runnable MoonBit `test { ... }` blocks will be tested by `moon test`, and symlink it to `README.md` to produce verifiable `README.md` filde.
+- Output `README.mbt.md` in the package directory; `*.mbt.md` files including runnable MoonBit `test { ... }` blocks will be tested by `moon test`, and symlink it to `README.md` to produce verifiable `README.md` file.
 - DON'T duplicate definitions in `*.mbt.md` files wrapped in MoonBit snippets, they are REAL code that shadow the original definitions
 - Aim to cover ≥70% of the public API with concise sections and examples.
 - Use black‑box tests: call via `@package.fn`. The package name used to be the same as the directory name.
