@@ -848,12 +848,7 @@ pub(open) trait Extendable {}
 9. Don't forget @package prefix when calling functions from other packages
 10. Don't use ++ or -- (not supported), use `i = i + 1` or  `i += 1`
 11. **Don't add explicit `try` for error-raising functions** - errors propagate automatically (unlike Swift)
-
-## Legacy Note
-
-**Older code may use**:
-- `function_name!(...)` for raising functions. This is deprecated; call without `!`.
-- `function_name(...)?` for raising functions. This is deprecated; use `try? function_name(...)` instead, the expression is of type `Result[_]`.
+12. **Legacy syntax**: Older code may use `function_name!(...)` or `function_name(...)?` - these are deprecated; use normal calls and `try?` for Result conversion
 
 
 # MoonBit Build System - Essential Guide
