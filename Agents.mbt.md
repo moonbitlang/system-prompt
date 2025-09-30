@@ -411,6 +411,26 @@ fn sum_tree(tree : Tree[Int]) -> Int {
 }
 ```
 
+## Common Derivable Traits
+
+Most types can automatically derive standard traits using the `derive(...)` syntax:
+
+- **`Show`** - Enables `to_string()` and string interpolation with `\{value}`
+- **`Eq`** - Enables `==` and `!=` equality operators
+- **`Compare`** - Enables `<`, `>`, `<=`, `>=` comparison operators
+- **`ToJson`** - Enables `@json.inspect()` for readable test output
+- **`Hash`** - Enables use as Map keys
+
+```moonbit
+///|
+struct Coordinate { x : Int; y : Int } derive(Show, Eq, ToJson)
+
+///|
+enum Status { Active; Inactive } derive(Show, Eq, Compare)
+```
+
+**Best practice**: Always derive `Show` and `Eq` for data types. Add `ToJson` if you plan to test them with `@json.inspect()`.
+
 ## Reference Semantics by Default
 
 MoonBit passes most types by reference semantically (the optimizer may copy
