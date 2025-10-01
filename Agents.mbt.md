@@ -192,6 +192,30 @@ test "int and char literal" {
 
 }
 ```
+## Bytes
+
+Bytes is immutable; Indexing (`b[i]`) returns a `Byte`.
+
+```moonbit
+///|
+test "bytes literal" {
+  let b0 : Bytes = b"abcd"
+  let b1 : Bytes = "abcd" // b" prefix is optional, when we know the type
+  let b2 : Bytes = [0xff, 0x00, 0x01] // Array literal overloading
+  assert_eq(b0[0], b'a') // indexing returns Byte
+}
+```
+## Array
+
+MoonBit Array is resizable array, FixedArray is fixed size array.
+
+```moonbit
+///|
+test "array literal" {
+  let a0 : Array[Int] = [1, 2, 3] // resizable
+  let a1 : FixedArray[Int] = [1, 2, 3] // Array literal overloading
+}
+```
 
 ## String
 
@@ -215,6 +239,10 @@ test "String indexing" {
   let eq_char = '='
   // s[0] == eq_char // ❌ Won't compile - eq_char is not a literal, lhs is Int while rhs is Char
   // Use: s[0] == '=' or s.get_char(0) == Some(eq_char)
+  let bytes = @encoding/utf8.encode("中文") // utf8 encode package is in stdlib
+  assert_eq(bytes, [0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87]) 
+  let s2 : String = @encoding/utf8.decode(bytes) // decode utf8 bytes back to String
+  assert_eq(s2, "中文")
 }
 ```
 
@@ -266,29 +294,7 @@ test "multiple line strings" {
   )
 }
 ```
-## Bytes
 
-Bytes is immutable; Indexing (`b[i]`) returns a `Byte`.
-
-```moonbit
-///|
-test "bytes literal" {
-  let b0 : Bytes = b"abcd"
-  let b1 : Bytes = "abcd" // b" prefix is optional, when we know the type
-  let b2 : Bytes = [0xff, 0x00, 0x01] // Array literal overloading
-}
-```
-## Array
-
-MoonBit Array is resizable array, FixedArray is fixed size array.
-
-```moonbit
-///|
-test "array literal" {
-  let a0 : Array[Int] = [1, 2, 3] // resizable
-  let a1 : FixedArray[Int] = [1, 2, 3] // Array literal overloading
-}
-```
 ## Map
 
 A built-in `Map` type that preserves insertion order (like
