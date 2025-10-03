@@ -110,7 +110,6 @@ test "everything is expression in MoonBit" {
     None
   }
   assert_eq(found, Some(2)) // Found at index 2
-  ...
 }
 
 ///|
@@ -176,19 +175,18 @@ test "inspect test" {
 
 ## Integers, Char
 
-MoonBit supports Byte, Int, UInt, Int64, UInt64, etc. When the type is known,
+MoonBit supports Byte, Int16, Int, UInt16, UInt, Int64, UInt64, etc. When the type is known,
 the literal can be overloaded:
 
 ```moonbit
 ///|
-test "int and char literal" {
-  let a0 : Int = 1
-  let a1 : UInt = 1
-  let a2 : Int64 = 1
-  let a3 : UInt64 = 1
-  let a4 : Byte = 3
-  let a5 : Int = 'b' // this also works, a will be the unicode value
-  let a6 : Char = 'b'
+test "int and char literal" {  
+  let a0  = 1 // a is Int by default
+  let (int, uint, uint16, int64, byte) : (Int, UInt, UInt16, Int64, Byte) = (1, 1, 1, 1, 1) 
+  assert_eq(int, uint16.to_int())
+  // when the type is known, the literal can be overloaded
+  let a1 : Int = 'b' // this also works, a5 will be the unicode value
+  let a2 : Char = 'b'
 
 }
 ```
@@ -594,6 +592,8 @@ fn create_window(
 }
 
 ///|
+/// Only type checked, skipped in test runs
+#skip 
 test "use function with label and optional parameter" {
   // Call with named arguments in any order
   let win1 : Window = create_window(title="App", height=400, width=1024)
@@ -1110,13 +1110,13 @@ block code)
 ///
 /// # Example
 /// ```moonbit
-/// inspect(my_maximum([1,2,3,4,5,6]), content="6")
+/// inspect(sum_array([1,2,3,4,5,6]), content="21")
 /// ```
 ///
 /// # Panics
 /// Panics if the `xs` is empty.
-pub fn[T : Compare] my_maximum(xs : Array[T]) -> T {
-  ...
+pub fn sum_array(xs : Array[Int]) -> Int {
+  xs.fold(init=0, (a,b)=> a +b)
 }
 ```
 
