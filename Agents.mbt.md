@@ -593,6 +593,7 @@ fn create_window(
 
 ///|
 /// Only type checked, skipped in test runs
+/// we can skip tests during prototyping and remove it when we fixed it
 #skip 
 test "use function with label and optional parameter" {
   // Call with named arguments in any order
@@ -608,7 +609,8 @@ test "use function with label and optional parameter" {
 
 ## Checked Errors
 
-MoonBit uses **checked** error-throwing functions, not unchecked exceptions:
+MoonBit uses **checked** error-throwing functions, not unchecked exceptions, 
+it is recommended to use `raise` for functions and use `Result` in testing.
 
 ```moonbit
 ///|
@@ -883,7 +885,7 @@ my_module
 - `moon new my_project` - Create new project
 - `moon run cmd/main` - Run main package
 - `moon build` - Build project
-- `moon check` - Type check without building
+- `moon check` - Type check without building, use it regularly
 - `moon check --target all` - Type check for all backends
 - `moon add package` - Add dependency
 - `moon remove package` - Remove dependency
@@ -1186,11 +1188,13 @@ The MoonBit code in docstring will be type checked and tested automatically.
 Practical testing guidance for MoonBit. Keep tests black-box by default and rely on snapshot `inspect(...)`.
 
 - Black-box by default: Call only public APIs via `@package.fn`. Use white-box tests only when private members matter.
-- Snapshots: Prefer `inspect(value, content="...")`. If unknown, write `inspect(value)` and run `moon test --update` (or `moon test -u`).
+- **Snapshots**: Prefer `inspect(value, content="...")`. If unknown, write `inspect(value)` and run `moon test --update` (or `moon test -u`).
   - Use regular `inspect()` for simple values (uses `Show` trait)
   - Use `@json.inspect()` for complex nested structures (uses `ToJson` trait, produces more readable output)
   - It is encouraged to `inspect` or `@json.inspect` the whole return value of a function if 
   the whole return value is not huge, this makes test simple. You need `impl (Show|ToJson) for YourType` or `derive (Show, ToJson)`.
+  - **Update workflow**: After changing code that affects output, run `moon test --update` to regenerate snapshots, then review the diffs in your test files (the `content=` parameter will be updated automatically).
+  - **Output location**: Test artifacts live under `target/<backend>/<mode>/test/`; the generated driver files show what actually ran.
 - Grouping: Combine related checks in one `test { ... }` block for speed and clarity.
 - Panics: Name test with prefix `test "panic ..." {...}`; if the call returns a value, wrap it with `ignore(...)` to silence warnings.
 - Errors: Use `try? f()` to get `Result[...]` and `inspect` it when a function may raise.
