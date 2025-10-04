@@ -17,7 +17,35 @@ Here is some typical project layouts you may encounter:
   still be executed in the directory of the module (where `moon.mod.json` is
   located), not the current package.
 
+## `.mbti` Files - Package Interface Documentation
 
+MoonBit interface files (`pkg.generated.mbti`) are compiler-generated summaries of each package's public API surface. They provide a formal, concise overview of all exported types, functions, and traits without implementation details.
+
+**Standard library interfaces** are available in `~/.moon/lib/core`:
+
+```
+$ tree -P '*.mbti' -I 'internal' --prune ~/.moon/lib/core # ignore internal packages
+/Users/username/.moon/lib/core
+├── builtin
+│   └── pkg.generated.mbti
+├── array
+│   └── pkg.generated.mbti
+├── bench
+│   └── pkg.generated.mbti
+├── bigint
+│   └── pkg.generated.mbti
+├── bool
+│   └── pkg.generated.mbti
+├── buffer
+│   └── pkg.generated.mbti
+.....
+```
+
+**Reading `.mbti` files for API discovery**:
+- **Start with `builtin/pkg.generated.mbti`** - contains core types (String, Int, Array, etc.) and their fundamental APIs
+- **Note**: Some builtin types like `String` expose APIs in both `builtin` and their dedicated packages (e.g., `String`)
+- **Local dependencies**: Find `.mbti` files in the `.mooncakes` directory by searching for `pkg.generated.mbti`
+- **Your own packages**: After running `moon info`, check the generated `.mbti` in each package directory to verify public API changes
 # MoonBit Language Fundamentals
 
 ## Core Facts
