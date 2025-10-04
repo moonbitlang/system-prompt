@@ -1222,7 +1222,6 @@ Practical testing guidance for MoonBit. Keep tests black-box by default and rely
   - It is encouraged to `inspect` or `@json.inspect` the whole return value of a function if 
   the whole return value is not huge, this makes test simple. You need `impl (Show|ToJson) for YourType` or `derive (Show, ToJson)`.
   - **Update workflow**: After changing code that affects output, run `moon test --update` to regenerate snapshots, then review the diffs in your test files (the `content=` parameter will be updated automatically).
-  - **Output location**: Test artifacts live under `target/<backend>/<mode>/test/`; the generated driver files show what actually ran.
 - Grouping: Combine related checks in one `test { ... }` block for speed and clarity.
 - Panics: Name test with prefix `test "panic ..." {...}`; if the call returns a value, wrap it with `ignore(...)` to silence warnings.
 - Errors: Use `try? f()` to get `Result[...]` and `inspect` it when a function may raise.
