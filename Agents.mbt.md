@@ -606,10 +606,7 @@ test "use function with label and optional parameter" {
 }
 ```
 
-
-# Error Handling
-
-## Checked Exceptions
+## Checked Errors
 
 MoonBit uses **checked** error-throwing functions, not unchecked exceptions:
 
