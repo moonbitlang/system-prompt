@@ -15,7 +15,7 @@ The MoonBit async library provides comprehensive asynchronous IO functionality a
 ### Installation and Setup
 
 ```bash
-moon add moonbitlang/async@0.7.0
+moon add moonbitlang/async@0.8.0
 ```
 
 **Important**: Add the native target configuration to your project's `moon.mod.json`:
