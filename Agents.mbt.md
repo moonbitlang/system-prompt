@@ -1012,6 +1012,17 @@ fn main {
 }
 ```
 
+## Using Standard Library (moonbitlang/core)
+
+**MoonBit standard library (moonbitlang/core) packages are automatically imported** - DO NOT add them to dependencies:
+
+- ❌ **DO NOT** use `moon add` to add standard library packages like `moonbitlang/core/strconv`
+- ❌ **DO NOT** add standard library packages to `"deps"` field of `moon.mod.json`
+- ❌ **DO NOT** add standard library packages to `"import"` field of `moon.pkg.json`
+- ✅ **DO** use them directly: `@strconv.parse_int()`, `@list.List`, `@array.fold()`, etc.
+
+If you get an error like "cannot import `moonbitlang/core/strconv`", remove it from imports - it's automatically available.
+
 ## Creating Packages
 
 To add a new package `fib` under `.`:
@@ -1186,11 +1197,14 @@ The MoonBit code in docstring will be type checked and tested automatically.
 
 - `moon fmt` is used to format your code properly.
 
-- `moon info` is used to update the generated interface of the package, each
-  package has a generated interface file `.mbti`, it is a brief formal
-  description of the package. If nothing in `.mbti` changes, this means your
-  change does not bring the visible changes to the external package users, it is
-  typically a safe refactoring.
+- `moon info` is used to update the generated interface of the package
+  **in current project**. Each package has a generated interface file `.mbti`,
+  it is a brief formal description of the package. If nothing in `.mbti`
+  changes, this means your change does not bring the visible changes to the
+  external package users, it is typically a safe refactoring.
+  **Note**: `moon info` will only work with packages in the current project, and
+  therefore you cannot use `moon info` to generate interface for dependencies
+  like standard library.
 
 - So in the last step, you typically run `moon info && moon fmt` to update the
   interface and format the code. You also check the diffs of `.mbti` file to see
