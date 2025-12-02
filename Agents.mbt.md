@@ -206,101 +206,85 @@ test "inspect test" {
 MoonBit supports Byte, Int16, Int, UInt16, UInt, Int64, UInt64, etc. When the type is known,
 the literal can be overloaded:
 
-```mbt check
-///|
-test "int and char literal" {
-  let a0 = 1 // a is Int by default
-  let (int, uint, uint16, int64, byte) : (Int, UInt, UInt16, Int64, Byte) = (
-    1, 1, 1, 1, 1,
-  )
-  assert_eq(int, uint16.to_int())
-  // when the type is known, the literal can be overloaded
-  let a1 : Int = 'b' // this also works, a5 will be the unicode value
-  let a2 : Char = 'b'
-
-}
+```mbt test
+let a0 = 1 // a is Int by default
+let (int, uint, uint16, int64, byte) : (Int, UInt, UInt16, Int64, Byte) = (
+  1, 1, 1, 1, 1,
+)
+assert_eq(int, uint16.to_int())
+// when the type is known, the literal can be overloaded
+let a1 : Int = 'b' // this also works, a5 will be the unicode value
+let a2 : Char = 'b'
 ```
 ## Bytes
 
 Bytes is immutable; Indexing (`b[i]`) returns a `Byte`.
 
-```mbt check
-///|
-test "bytes literal" {
-  let b0 : Bytes = b"abcd"
-  let b1 : Bytes = "abcd" // b" prefix is optional, when we know the type
-  let b2 : Bytes = [0xff, 0x00, 0x01] // Array literal overloading
-  assert_eq(b0[0], b'a') // indexing returns Byte
-}
+```mbt test
+let b0 : Bytes = b"abcd"
+let b1 : Bytes = "abcd" // b" prefix is optional, when we know the type
+let b2 : Bytes = [0xff, 0x00, 0x01] // Array literal overloading
+assert_eq(b0[0], b'a') // indexing returns Byte
 ```
 ## Array
 
 MoonBit Array is resizable array, FixedArray is fixed size array.
 
-```mbt check
-///|
-test "array literal" {
-  let a0 : Array[Int] = [1, 2, 3] // resizable
-  // Array literal overloading
-  let a1 : FixedArray[Int] = [1, 2, 3]
-  let a2 : ReadOnlyArray[Int] = [1, 2, 3]
-  let a3 : ArrayView[Int] = [1, 2, 3]
-}
+```mbt test
+let a0 : Array[Int] = [1, 2, 3] // resizable
+// Array literal overloading (disambiguated via type in the current context)
+let a1 : FixedArray[Int] = [1, 2, 3]
+let a2 : ReadOnlyArray[Int] = [1, 2, 3]
+let a3 : ArrayView[Int] = [1, 2, 3]
 ```
 
 ## String
 
-MoonBit's String is immutable utf16 encoded, `s[i]` returns an integer (code units),
-`s.get(i)` returns `Option[Int]`, `s.get_char(i)` returns `Option[Char]`.
+MoonBit's String is immutable utf16 encoded, `s.code_unit_at(i)` returns a code unit (UInt16),
+ `s.get_char(i)` returns `Option[Char]`.
 Since MoonBit supports char literal overloading, you can write code snippets like this:
 
-```mbt check
-///|
-test "String indexing" {
-  let s = "hello world"
-  // Direct indexing with char literals (char literals are overloaded to Int in this context)
-  let b0 = s[0] == '\n' || s[0] is ('h' | 'b') || s[0] is ('a'..='z')
-  // In check mode (expression with explicit type), ('\n' : Int) is valid.
-  // Here the compiler knows `s[i]` is Int
+```mbt test
+let s = "hello world"
 
-  // Using get_char for Option handling
-  let b1 = s.get_char(0) is Some('a'..='z') // this also works but slightly slower
+let b0 : UInt16 = s.code_unit_at(0) 
+assert_true(b0 is ('\n' | 'h' | 'b' | 'a'..='z'))
+// In check mode (expression with explicit type), ('\n' : Int) is valid.
+// Here the compiler knows `s[i]` is Int
 
-  // ⚠️ Important: Variables won't work with direct indexing
-  let eq_char = '='
-  // s[0] == eq_char // ❌ Won't compile - eq_char is not a literal, lhs is Int while rhs is Char
-  // Use: s[0] == '=' or s.get_char(0) == Some(eq_char)
-  let bytes = @encoding/utf8.encode("中文") // utf8 encode package is in stdlib
-  assert_eq(bytes, [0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87])
-  let s2 : String = @encoding/utf8.decode(bytes) // decode utf8 bytes back to String
-  assert_eq(s2, "中文")
-}
+// Using get_char for Option handling
+let b1 : Char? = s.get_char(0) 
+assert_true(b1 is Some('a'..='z'))
+
+// ⚠️ Important: Variables won't work with direct indexing
+let eq_char : Char = '='
+// s.code_unit_at(0) == eq_char // ❌ Won't compile - eq_char is not a literal, lhs is UInt while rhs is Char
+// Use: s.code_unit_at(0) == '=' or s.get_char(0) == Some(eq_char)
+let bytes = @encoding/utf8.encode("中文") // utf8 encode package is in stdlib
+assert_true(bytes is [0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87])
+let s2 : String = @encoding/utf8.decode(bytes) // decode utf8 bytes back to String
+assert_true(s2 is "中文")
 ```
 
 #### String Interpolation
 
 MoonBit uses `\{}` for string interpolation:
 
-```mbt check
-///|
+```mbt test
 let point : Point = { x: 10, y: 20 }
+let name : String = "Moon"
+let config = { "cache": 123 }
+let version = 1.0
+let message = "Hello \{name} v\{version}" // "Hello Moon v1.0"
+let desc = "Point at \{point}" // Uses point.to_string()
+// Works with any type implementing Show
 
-///|
-test "String interpolation" {
-  let name : String = "Moon"
-  let config = { "cache": 123 }
-  let version = 1.0
-  let message = "Hello \{name} v\{version}" // "Hello Moon v1.0"
-  let desc = "Point at \{point}" // Uses point.to_string()
-  // Works with any type implementing Show
+// ❌ Wrong - quotes inside interpolation not allowed:
+// println("  - Checking if 'cache' section exists: \{config["cache"]}")
 
-  // ❌ Wrong - quotes inside interpolation not allowed:
-  // println("  - Checking if 'cache' section exists: \{config["cache"]}")
-
-  // ✅ Correct - extract to variable first:
-  let has_key = config["cache"] // `"` not allowed in interpolation
-  println("  - Checking if 'cache' section exists: \{has_key}")
-}
+// ✅ Correct - extract to variable first:
+let has_key = config["cache"] // `"` not allowed in interpolation
+println("  - Checking if 'cache' section exists: \{has_key}")
 ```
 
 <Important> expressions inside `\{}` can only be basic expressions (no quotes, newlines, or nested interpolations). String literals are not allowed as it makes lexing too difficult.
@@ -308,22 +292,19 @@ test "String interpolation" {
 
 #### Multiple line strings
 
-```mbt check
-///|
-test "multiple line strings" {
-  let multi_line_string : String =
+```mbt test
+let multi_line_string : String =
+  #|Hello
+  #|World
+  #|
+inspect(
+  multi_line_string,
+  content=(
     #|Hello
     #|World
     #|
-  inspect(
-    multi_line_string,
-    content=(
-      #|Hello
-      #|World
-      #|
-    ), // when multiple line string is passed as argument, `()` wrapper is required
-  )
-}
+  ), // when multiple line string is passed as argument, `()` wrapper is required
+)
 ```
 
 ## Map
@@ -331,42 +312,36 @@ test "multiple line strings" {
 A built-in `Map` type that preserves insertion order (like
 JavaScript's Map):
 
-```mbt check
-///|
-/// Map literal syntax
+```mbt test
+// Map literal syntax
 let map : Map[String, Int] = { "a": 1, "b": 2, "c": 3 }
 
-///|
 // Empty map
 let empty : Map[String, Int] = {}
 
-///|
-/// From array of pairs
+// From array of pairs
 let from_pairs : Map[String, Int] = Map::from_array([("x", 1), ("y", 2)])
 
-///|
-test "map operations" {
-  // Set/update value
-  map["new-key"] = 3
-  map["a"] = 10 // Updates existing key
+// Set/update value
+map["new-key"] = 3
+map["a"] = 10 // Updates existing key
 
-  // Get value - returns Option[T]
-  assert_eq(map.get("new-key"), Some(3))
-  assert_eq(map.get("missing"), None)
+// Get value - returns Option[T]
+assert_eq(map.get("new-key"), Some(3))
+assert_eq(map.get("missing"), None)
 
-  // Direct access (panics if key missing)
-  let value : Int = map["a"] // value = 10
+// Direct access (panics if key missing)
+let value : Int = map["a"] // value = 10
 
-  // Iteration preserves insertion order
-  for k, v in map {
-    println("\{k}: \{v}") // Prints: a: 10, b: 2, c: 3, new-key: 3
-  }
-
-  // Other common operations
-  map.remove("b")
-  assert_eq(map.contains("b"), false)
-  assert_eq(map.length(), 3)
+// Iteration preserves insertion order
+for k, v in map {
+  println("\{k}: \{v}") // Prints: a: 10, b: 2, c: 3, new-key: 3
 }
+
+// Other common operations
+map.remove("b")
+assert_eq(map.contains("b"), false)
+assert_eq(map.length(), 3)
 ```
 
 ## View Types
@@ -526,15 +501,13 @@ fn process_array(arr : Array[Int]) -> String {
 }
 
 ///|
-test "record destructuring" {
-  // Guards and destructuring
-  let _s = match point {
+fn analyze_point(point : Point) -> String {
+  match point {
     { x: 0, y: 0 } => "origin"
     { x, y } if x == y => "on diagonal"
     { x, .. } if x < 0 => "left side"
     _ => "other"
   }
-
 }
 
 ///|
@@ -589,29 +562,26 @@ fn find_pair(arr : Array[Int], target : Int) -> (Int, Int)? {
 
 `for` loops have unique MoonBit features:
 
-```mbt check
-///|
-test "functional for loop" {
-  // For loop with multiple loop variables,
-  // i and j are loop state
-  let sum_result : Int = for i = 0, sum = 0 {
-    if i <= 10 {
-      continue i + 1, sum + i
-      // update new loop state in a functional way
-    } else { // Continue with new values
-      break sum // Final value when loop completes normally
-    }
+```mbt test
+// For loop with multiple loop variables,
+// i and j are loop state
+let sum_result : Int = for i = 0, sum = 0 {
+  if i <= 10 {
+    continue i + 1, sum + i
+    // update new loop state in a functional way
+  } else { // Continue with new values
+    break sum // Final value when loop completes normally
   }
-  inspect(sum_result, content="55")
-
-  // special form with condition and state update in the `for` header
-  let sum_result2 : Int = for i = 0, sum = 0; i <= 10; i = i + 1, sum = sum + i {
-
-  } else {
-    sum
-  }
-  inspect(sum_result2, content="55")
 }
+inspect(sum_result, content="55")
+
+// special form with condition and state update in the `for` header
+let sum_result2 : Int = for i = 0, sum = 0; i <= 10; i = i + 1, sum = sum + i {
+
+} else {
+  sum
+}
+inspect(sum_result2, content="55")
 ```
 
 ## Label and Optional Parameters
@@ -932,8 +902,8 @@ my_module
 - `moon test` - Run all tests
 - `moon test --update`
 - `moon test -v` - Verbose output with test names
-- `moon test -p package` - Test specific package
-- `moon test -p package -f filename` - Test specific file in a package
+- `moon test dirname` - Test specific directory
+- `moon test filename` - Test specific file in a directory
 - `moon coverage analyze` - Analyze coverage
 
 ## Package Management
@@ -1005,7 +975,7 @@ Packages per directory, packages without `moon.pkg.json` are not recognized.
 
 Example:
 
-```
+```mbt
 // In main.mbt after importing "username/hello/liba" in `moon.pkg.json`
 fn main {
   println(@liba.hello())  // Calls hello() from liba package
