@@ -241,7 +241,7 @@ let a3 : ArrayView[Int] = [1, 2, 3]
 ## String
 
 MoonBit's String is immutable utf16 encoded, `s.code_unit_at(i)` returns a code unit (UInt16),
- `s.get_char(i)` returns `Option[Char]`.
+`s.get_char(i)` returns `Option[Char]`.
 Since MoonBit supports char literal overloading, you can write code snippets like this:
 
 ```mbt test
@@ -1199,7 +1199,8 @@ The MoonBit code in docstring will be type checked and tested automatically.
 
 - Output `README.mbt.md` in the package directory. 
   `*.mbt.md` file treats `mbt test` and `mbt check` specially, `mbt test` block will be wrapped using `test { ... }` and run by `moon check` and `moon test`.
-  `mbt check` block will be included directly as code and also run by `moon check` and `moon test`. `mbt` will only be syntax highlighted.
+  `mbt check` block will be included directly as code and also run by `moon check` and `moon test`. 
+  If you are only referencing types from the package, you should use `mbt` which will only be syntax highlighted.
   Symlink `README.mbt.md` to `README.md` to adapt to systems that expect `README.md`. 
 - Aim to cover ≥90% of the public API with concise sections and examples.
 - Organize by feature: construction, consumption, transformation, and key usage tips.
@@ -1251,7 +1252,7 @@ Practical testing guidance for MoonBit. Keep tests black-box by default and rely
 3. **Method discovery**: Use `moon doc "Type::method"` to find methods on types
 4. **Type inspection**: Use `moon doc "TypeName"` to see type definition and methods
 5. **Package exploration**: Use `moon doc ""` at module root to see all available packages, including dependencies and stdlib
-
+6. **Globbing**: Use `*` wildcard for partial matches, e.g. `moon doc "String::*rev*"` to find all String methods with "rev" in their name
 ### Examples
 
 ````bash
@@ -1262,9 +1263,6 @@ type String
 
   pub fn String::add(String, String) -> String
   pub fn String::at(String, Int) -> Int
-  pub fn String::char_length(String, start_offset? : Int, end_offset? : Int) -> Int
-  pub fn String::char_length_eq(String, Int, start_offset? : Int, end_offset? : Int) -> Bool
-  pub fn String::char_length_ge(String, Int, start_offset? : Int, end_offset? : Int) -> Bool
   # ... more methods omitted ...
 
 # list all symbols in a standard library package:
@@ -1273,15 +1271,6 @@ moonbitlang/core/buffer
 
 fn from_array(ArrayView[Byte]) -> Buffer
 fn from_bytes(Bytes) -> Buffer
-fn from_iter(Iter[Byte]) -> Buffer
-fn new(size_hint? : Int) -> Buffer
-type Buffer
-  fn Buffer::contents(Self) -> Bytes
-  fn Buffer::is_empty(Self) -> Bool
-  fn Buffer::length(Self) -> Int
-  # ... more buffer methods omitted ...
-  impl Logger for Buffer
-  impl Show for Buffer
 # ... more functions omitted ...
 
 # list the specific function in a package:
@@ -1292,21 +1281,19 @@ pub fn new(size_hint? : Int) -> Buffer
   Creates a new extensible buffer with specified initial capacity. If the
    initial capacity is less than 1, the buffer will be initialized with capacity
    1.
+# ... more details omitted ...
 
-   Parameters:
+$ moon doc "String::*rev*"  
+package "moonbitlang/core/string"
 
-   * `size_hint` : Initial capacity of the buffer in bytes. Defaults to 0.
+pub fn String::rev(String) -> String
+  Returns a new string with the characters in reverse order. It respects
+   Unicode characters and surrogate pairs but not grapheme clusters.
 
-   Returns a new buffer of type `Buffer`.
+pub fn String::rev_find(String, StringView) -> Int?
+  Returns the offset (charcode index) of the last occurrence of the given
+   substring. If the substring is not found, it returns None.
 
-   Example:
-
-   ```mbt test
-     let buf = @buffer.new(size_hint=10)
-     inspect(buf.length(), content="0")
-     buf.write_string("test")
-     inspect(buf.length(), content="8")
-   ```
-````
+# ... more details omitted ...
 
 **Best practice**: When implementing a feature, start with `moon doc` queries to discover available APIs before writing code. This is faster and more accurate than searching through files.
