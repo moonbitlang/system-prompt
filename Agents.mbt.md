@@ -1197,12 +1197,12 @@ The MoonBit code in docstring will be type checked and tested automatically.
 
 ## MoonBit Package `README` Generation Guide
 
-- Output `README.mbt.md` in the package directory; `*.mbt.md` files including runnable MoonBit `test { ... }` blocks will be tested by `moon test`, and symlink it to `README.md` to produce verifiable `README.md` file.
-- DON'T duplicate definitions in `*.mbt.md` files wrapped in MoonBit snippets, they are REAL code that shadow the original definitions
-- Aim to cover ≥70% of the public API with concise sections and examples.
-- Use black‑box tests: call via `@package.fn`. The package name used to be the same as the directory name.
+- Output `README.mbt.md` in the package directory. 
+  `*.mbt.md` file treats `mbt test` and `mbt check` specially, `mbt test` block will be wrapped using `test { ... }` and run by `moon check` and `moon test`.
+  `mbt check` block will be included directly as code and also run by `moon check` and `moon test`. `mbt` will only be syntax highlighted.
+  Symlink `README.mbt.md` to `README.md` to adapt to systems that expect `README.md`. 
+- Aim to cover ≥90% of the public API with concise sections and examples.
 - Organize by feature: construction, consumption, transformation, and key usage tips.
-- Verify with `moon test -p=<PACKAGE>`. Fix only errors from your package; ignore external warnings.
 
 ## MoonBit Testing Guide
 
@@ -1220,71 +1220,55 @@ Practical testing guidance for MoonBit. Keep tests black-box by default and rely
 - Errors: Use `try? f()` to get `Result[...]` and `inspect` it when a function may raise.
 - Verify: Run `moon test` (or `-u` to update snapshots) and `moon fmt` afterwards.
 
-## API Discovery with `moondoc`
+## API Discovery with `moon doc`
 
-**CRITICAL**: `moondoc -q <query>` is your PRIMARY tool for discovering available APIs, functions, types, and methods in MoonBit. It is **more powerful and accurate** than `grep_search`, `semantic_search`, or any file-based searching tools. Always prefer `moondoc` over other approaches when exploring what APIs are available.
+**CRITICAL**: `moon doc '<query>'` is your PRIMARY tool for discovering available APIs, functions, types, and methods in MoonBit. It is **more powerful and accurate** than `grep_search`, `semantic_search`, or any file-based searching tools. Always prefer `moon doc` over other approaches when exploring what APIs are available.
 
 ### Query Syntax
 
-`moondoc` uses a specialized query syntax designed for symbol lookup:
-
-- **Empty query**: `moondoc -q`
+`moon doc` uses a specialized query syntax designed for symbol lookup:
+- **Empty query**: `moon doc `
 
   - In a module: shows all available packages in current module
   - In a package: shows all symbols in current package
   - Outside package: shows all available packages
 
-- **Function/value lookup**: `moondoc -q "[@pkg.]sym"`
+- **Function/value lookup**: `moon doc -q "[@pkg.]sym"`
+  
+- **Type lookup**: `moon doc  "[@pkg.]Sym"`
 
-  - Search for function or value `sym` in package `pkg`
-  - Example: `moondoc -q "@array.filter"` - find `filter` function in `@array` package
-  - Example: `moondoc -q "parse_int"` - find `parse_int` in current package
+- **Method/field lookup**: `moon doc  "[@pkg.]T::sym"`
 
-- **Type lookup**: `moondoc -q "[@pkg.]Sym"`
-
-  - Search for type/struct/enum/trait `Sym` (uppercase) in package `pkg`
-  - Example: `moondoc -q "@json.JsonValue"` - find `JsonValue` type
-  - Example: `moondoc -q "Result"` - find `Result` type in current package or stdlib
-
-- **Method/field lookup**: `moondoc -q "[@pkg.]T::sym"`
-
-  - Search for method/enum variant/struct field/trait method `sym` of type `T`
-  - Example: `moondoc -q "@array.Array::map"` - find `map` method on `Array`
-  - Example: `moondoc -q "String::length"` - find `length` method on `String`
-
-- **Package exploration**: `moondoc -q "@pkg"`
+- **Package exploration**: `moon doc -q "@pkg"`
   - Show package `pkg` and list all its exported symbols
-  - Example: `moondoc -q "@json"` - explore entire `@json` package
-  - Example: `moondoc -q "@encoding/utf8"` - explore nested package
+  - Example: `moon doc -q "@json"` - explore entire `@json` package
+  - Example: `moon doc -q "@encoding/utf8"` - explore nested package
 
 ### Workflow for API Discovery
 
-1. **Finding functions**: Use `moondoc -q "@pkg.function_name"` before grep searching
-2. **Exploring packages**: Use `moondoc -q "@pkg"` to see what's available in a package
-3. **Method discovery**: Use `moondoc -q "Type::method"` to find methods on types
-4. **Type inspection**: Use `moondoc -q "TypeName"` to see type definition and methods
-5. **Package exploration**: Use `moondoc -q ""` at module root to see all available packages, including dependencies and stdlib
+1. **Finding functions**: Use `moon doc -q "@pkg.function_name"` before grep searching
+2. **Exploring packages**: Use `moon doc -q "@pkg"` to see what's available in a package
+3. **Method discovery**: Use `moon doc -q "Type::method"` to find methods on types
+4. **Type inspection**: Use `moon doc -q "TypeName"` to see type definition and methods
+5. **Package exploration**: Use `moon doc -q ""` at module root to see all available packages, including dependencies and stdlib
 
 ### Examples
 
 ````bash
 # search for String methods in standard library:
-$ moondoc -q "String"
-
-package "moonbitlang/core/string"
+$ moon doc  "String"
 
 type String
 
-  fn String::add(String, String) -> String
-  fn String::at(String, Int) -> Int
-  fn String::char_length(String, start_offset? : Int, end_offset? : Int) -> Int
-  fn String::char_length_eq(String, Int, start_offset? : Int, end_offset? : Int) -> Bool
-  fn String::char_length_ge(String, Int, start_offset? : Int, end_offset? : Int) -> Bool
+  pub fn String::add(String, String) -> String
+  pub fn String::at(String, Int) -> Int
+  pub fn String::char_length(String, start_offset? : Int, end_offset? : Int) -> Int
+  pub fn String::char_length_eq(String, Int, start_offset? : Int, end_offset? : Int) -> Bool
+  pub fn String::char_length_ge(String, Int, start_offset? : Int, end_offset? : Int) -> Bool
   # ... more methods omitted ...
 
 # list all symbols in a standard library package:
-$ moondoc -q "@buffer"
-
+$ moon doc  "@buffer"
 moonbitlang/core/buffer
 
 fn from_array(ArrayView[Byte]) -> Buffer
@@ -1301,10 +1285,10 @@ type Buffer
 # ... more functions omitted ...
 
 # list the specific function in a package:
-$ moondoc -q "@buffer.new"
+$ moon doc  "@buffer.new"
 package "moonbitlang/core/buffer"
 
-fn new(size_hint? : Int) -> Buffer
+pub fn new(size_hint? : Int) -> Buffer
   Creates a new extensible buffer with specified initial capacity. If the
    initial capacity is less than 1, the buffer will be initialized with capacity
    1.
@@ -1325,4 +1309,4 @@ fn new(size_hint? : Int) -> Buffer
    ```
 ````
 
-**Best practice**: When implementing a feature, start with `moondoc` queries to discover available APIs before writing code. This is faster and more accurate than searching through files.
+**Best practice**: When implementing a feature, start with `moon doc` queries to discover available APIs before writing code. This is faster and more accurate than searching through files.
