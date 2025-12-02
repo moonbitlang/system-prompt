@@ -1233,24 +1233,24 @@ Practical testing guidance for MoonBit. Keep tests black-box by default and rely
   - In a package: shows all symbols in current package
   - Outside package: shows all available packages
 
-- **Function/value lookup**: `moon doc -q "[@pkg.]sym"`
+- **Function/value lookup**: `moon doc "[@pkg.]sym"`
   
 - **Type lookup**: `moon doc  "[@pkg.]Sym"`
 
 - **Method/field lookup**: `moon doc  "[@pkg.]T::sym"`
 
-- **Package exploration**: `moon doc -q "@pkg"`
+- **Package exploration**: `moon doc "@pkg"`
   - Show package `pkg` and list all its exported symbols
-  - Example: `moon doc -q "@json"` - explore entire `@json` package
-  - Example: `moon doc -q "@encoding/utf8"` - explore nested package
+  - Example: `moon doc "@json"` - explore entire `@json` package
+  - Example: `moon doc "@encoding/utf8"` - explore nested package
 
 ### Workflow for API Discovery
 
-1. **Finding functions**: Use `moon doc -q "@pkg.function_name"` before grep searching
-2. **Exploring packages**: Use `moon doc -q "@pkg"` to see what's available in a package
-3. **Method discovery**: Use `moon doc -q "Type::method"` to find methods on types
-4. **Type inspection**: Use `moon doc -q "TypeName"` to see type definition and methods
-5. **Package exploration**: Use `moon doc -q ""` at module root to see all available packages, including dependencies and stdlib
+1. **Finding functions**: Use `moon doc "@pkg.function_name"` before grep searching
+2. **Exploring packages**: Use `moon doc "@pkg"` to see what's available in a package
+3. **Method discovery**: Use `moon doc "Type::method"` to find methods on types
+4. **Type inspection**: Use `moon doc "TypeName"` to see type definition and methods
+5. **Package exploration**: Use `moon doc ""` at module root to see all available packages, including dependencies and stdlib
 
 ### Examples
 
