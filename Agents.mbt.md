@@ -67,7 +67,7 @@ Core facts that impact how you write and refactor code.
 
 Quick reference:
 
-```moonbit
+```mbt check
 ///|
 /// comments doc string
 pub fn sum(x : Int, y : Int) -> Int {
@@ -206,7 +206,7 @@ test "inspect test" {
 MoonBit supports Byte, Int16, Int, UInt16, UInt, Int64, UInt64, etc. When the type is known,
 the literal can be overloaded:
 
-```moonbit
+```mbt check
 ///|
 test "int and char literal" {
   let a0 = 1 // a is Int by default
@@ -224,7 +224,7 @@ test "int and char literal" {
 
 Bytes is immutable; Indexing (`b[i]`) returns a `Byte`.
 
-```moonbit
+```mbt check
 ///|
 test "bytes literal" {
   let b0 : Bytes = b"abcd"
@@ -237,7 +237,7 @@ test "bytes literal" {
 
 MoonBit Array is resizable array, FixedArray is fixed size array.
 
-```moonbit
+```mbt check
 ///|
 test "array literal" {
   let a0 : Array[Int] = [1, 2, 3] // resizable
@@ -254,7 +254,7 @@ MoonBit's String is immutable utf16 encoded, `s[i]` returns an integer (code uni
 `s.get(i)` returns `Option[Int]`, `s.get_char(i)` returns `Option[Char]`.
 Since MoonBit supports char literal overloading, you can write code snippets like this:
 
-```moonbit
+```mbt check
 ///|
 test "String indexing" {
   let s = "hello world"
@@ -281,7 +281,7 @@ test "String indexing" {
 
 MoonBit uses `\{}` for string interpolation:
 
-```moonbit
+```mbt check
 ///|
 let point : Point = { x: 10, y: 20 }
 
@@ -308,7 +308,7 @@ test "String interpolation" {
 
 #### Multiple line strings
 
-```moonbit
+```mbt check
 ///|
 test "multiple line strings" {
   let multi_line_string : String =
@@ -331,7 +331,7 @@ test "multiple line strings" {
 A built-in `Map` type that preserves insertion order (like
 JavaScript's Map):
 
-```moonbit
+```mbt check
 ///|
 /// Map literal syntax
 let map : Map[String, Int] = { "a": 1, "b": 2, "c": 3 }
@@ -393,7 +393,7 @@ Convert back with `.to_string()`, `.to_bytes()`, or `.to_array()` when you need 
 
 ## Complex Types
 
-```moonbit
+```mbt check
 ///|
 type UserId = Int // Int is aliased to UserId - like symlink
 
@@ -454,7 +454,7 @@ Most types can automatically derive standard traits using the `derive(...)` synt
 - **`ToJson`** - Enables `@json.inspect()` for readable test output
 - **`Hash`** - Enables use as Map keys
 
-```moonbit
+```mbt check
 ///|
 struct Coordinate {
   x : Int
@@ -475,7 +475,7 @@ enum Status {
 MoonBit passes most types by reference semantically (the optimizer may copy
 immutables):
 
-```moonbit
+```mbt check
 ///|
 ///  Structs with 'mut' fields are always passed by reference
 struct Counter {
@@ -513,7 +513,7 @@ test "ref swap" {
 
 MoonBit's pattern matching is comprehensive and exhaustive:
 
-```moonbit
+```mbt check
 ///|
 /// Destructure arrays with rest patterns
 fn process_array(arr : Array[Int]) -> String {
@@ -553,7 +553,7 @@ fn is_palindrome(s : StringView) -> Bool {
 
 The `loop` construct is unique to MoonBit:
 
-```moonbit
+```mbt check
 ///|
 /// Functional loop with pattern matching on loop variables
 /// @list.List is from the standard library
@@ -589,7 +589,7 @@ fn find_pair(arr : Array[Int], target : Int) -> (Int, Int)? {
 
 `for` loops have unique MoonBit features:
 
-```moonbit
+```mbt check
 ///|
 test "functional for loop" {
   // For loop with multiple loop variables,
@@ -616,7 +616,7 @@ test "functional for loop" {
 
 ## Label and Optional Parameters
 
-```moonbit
+```mbt check
 ///|
 type Window
 
@@ -651,7 +651,7 @@ test "use function with label and optional parameter" {
 MoonBit uses **checked** error-throwing functions, not unchecked exceptions,
 it is recommended to use `raise` for functions and use `Result` in testing.
 
-```moonbit
+```mbt check
 ///|
 ///  Declare error types with 'suberror'
 suberror ValueError String
@@ -749,7 +749,7 @@ fn handle_parse(s : String) -> Int {
 
 Methods use `Type::method_name` syntax, traits require explicit implementation:
 
-```moonbit
+```mbt check
 ///|
 struct Rectangle {
   width : Double
@@ -798,7 +798,7 @@ impl Hash for Rectangle with hash_combine(self, hasher) {
 
 MoonBit supports operator overloading through traits:
 
-```moonbit
+```mbt check
 ///|
 struct Vector(Int, Int)
 
@@ -837,7 +837,7 @@ test "overloading" {
 
 MoonBit has fine-grained visibility control:
 
-```moonbit
+```mbt check
 ///|
 /// `fn` defaults to Private - only visible in current package
 fn internal_helper() -> Unit {
@@ -1140,7 +1140,7 @@ Embed external files as MoonBit code:
 
 Generated code example:
 
-```moonbit
+```mbt check
 ///|
 let data : String =
   #|hello,
@@ -1153,12 +1153,12 @@ let data : String =
 Write documentation using `///` comments (started with `///|` to delimit the
 block code)
 
-```moonbit
+```mbt check
 ///|
 /// Get the largest element of a non-empty `Array`.
 ///
 /// # Example
-/// ```moonbit
+/// ```mbt test
 /// inspect(sum_array([1,2,3,4,5,6]), content="21")
 /// ```
 ///
@@ -1328,12 +1328,7 @@ type Buffer
   # ... more buffer methods omitted ...
   impl Logger for Buffer
   impl Show for Buffer
-pub using @buffer {type Buffer as T}
-trait Leb128 { ... }
-  impl Leb128 for Int
-  impl Leb128 for Int64
-  impl Leb128 for UInt
-  impl Leb128 for UInt64
+# ... more functions omitted ...
 
 # list the specific function in a package:
 $ moondoc -q "@buffer.new"
@@ -1352,7 +1347,7 @@ fn new(size_hint? : Int) -> Buffer
 
    Example:
 
-   ```moonbit
+   ```mbt test
      let buf = @buffer.new(size_hint=10)
      inspect(buf.length(), content="0")
      buf.write_string("test")
