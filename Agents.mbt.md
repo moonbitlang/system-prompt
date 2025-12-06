@@ -1017,7 +1017,8 @@ Packages per directory, packages without `moon.pkg.json` are not recognized.
 Example:
 
 ```mbt
-///| In main.mbt after importing "username/hello/liba" in `moon.pkg.json`
+///|
+/// In main.mbt after importing "username/hello/liba" in `moon.pkg.json`
 fn main {
   println(@liba.hello()) // Calls hello() from liba package
 }
