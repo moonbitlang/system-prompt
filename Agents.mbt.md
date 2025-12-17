@@ -927,7 +927,7 @@ MoonBit projects use `moon.mod.json` (module descriptor) and `moon.pkg.json`
 ```
 my_module
 ├── Agents.md                 # Guide to Agents
-├── README.mbt.md             # Markdown with tested code blocks (`test {...}`)
+├── README.mbt.md             # Markdown with tested code blocks (`test "..." { ... }`)
 ├── README.md -> README.mbt.md
 ├── cmd                       # Command line directory
 │   └── main
@@ -1278,8 +1278,8 @@ Practical testing guidance for MoonBit. Keep tests black-box by default and rely
   - Use `@json.inspect()` for complex nested structures (uses `ToJson` trait, produces more readable output)
   - It is encouraged to `inspect` or `@json.inspect` the whole return value of a function if
     the whole return value is not huge, this makes test simple. You need `impl (Show|ToJson) for YourType` or `derive (Show, ToJson)`.
-  - **Update workflow**: After changing code that affects output, run `moon test --update` to regenerate snapshots, then review the diffs in your test files (the `content=` parameter will be updated automatically).
-- Grouping: Combine related checks in one `test { ... }` block for speed and clarity.
+- **Update workflow**: After changing code that affects output, run `moon test --update` to regenerate snapshots, then review the diffs in your test files (the `content=` parameter will be updated automatically).
+- Grouping: Combine related checks in one `test "..." { ... }` block for speed and clarity.
 - Panics: Name test with prefix `test "panic ..." {...}`; if the call returns a value, wrap it with `ignore(...)` to silence warnings.
 - Errors: Use `try? f()` to get `Result[...]` and `inspect` it when a function may raise.
 - Verify: Run `moon test` (or `-u` to update snapshots) and `moon fmt` afterwards.
