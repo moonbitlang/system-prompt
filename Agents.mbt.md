@@ -72,10 +72,6 @@ $ tree -P '*.mbti' -I 'internal' --prune ~/.moon/lib/core # ignore internal pack
 │   └── pkg.generated.mbti
 ├── bigint
 │   └── pkg.generated.mbti
-├── bool
-│   └── pkg.generated.mbti
-├── buffer
-│   └── pkg.generated.mbti
 .....
 ```
 
@@ -137,7 +133,7 @@ fn Rect::area(self : Rect) -> Int {
 }
 
 ///|
-impl Show for Rect with output(self, logger) {
+pub impl Show for Rect with output(_self, logger) {
   logger.write_string("Rect")
 }
 
@@ -248,36 +244,44 @@ test "inspect test" {
 MoonBit supports Byte, Int16, Int, UInt16, UInt, Int64, UInt64, etc. When the type is known,
 the literal can be overloaded:
 
-```mbt test
-let a0 = 1 // a is Int by default
-let (int, uint, uint16, int64, byte) : (Int, UInt, UInt16, Int64, Byte) = (
-  1, 1, 1, 1, 1,
-)
-assert_eq(int, uint16.to_int())
-// when the type is known, the literal can be overloaded
-let a1 : Int = 'b' // this also works, a5 will be the unicode value
-let a2 : Char = 'b'
+```mbt check
+test "integer and char literal overloading" {
+  let a0 = 1 // a is Int by default
+  let (int, uint, uint16, int64, byte) : (Int, UInt, UInt16, Int64, Byte) = (
+    1, 1, 1, 1, 1,
+  )
+  assert_eq(int, uint16.to_int())
+  // when the type is known, the literal can be overloaded
+  let a1 : Int = 'b' // this also works, a5 will be the unicode value
+  let a2 : Char = 'b'
+}
 ```
 ## Bytes
 
 Bytes is immutable; Indexing (`b[i]`) returns a `Byte`.
 
-```mbt test
-let b0 : Bytes = b"abcd"
-let b1 : Bytes = "abcd" // b" prefix is optional, when we know the type
-let b2 : Bytes = [0xff, 0x00, 0x01] // Array literal overloading
-assert_eq(b0[0], b'a') // indexing returns Byte
+```mbt check
+test "bytes literals overloading and indexing" {
+  let b0 : Bytes = b"abcd"
+  let b1 : Bytes = "abcd" // b" prefix is optional, when we know the type
+  let b2 : Bytes = [0xff, 0x00, 0x01] // Array literal overloading
+  assert_eq(b0[0], b'a') // indexing returns Byte
+}
 ```
 ## Array
 
 MoonBit Array is resizable array, FixedArray is fixed size array.
 
-```mbt test
-let a0 : Array[Int] = [1, 2, 3] // resizable
-// Array literal overloading (disambiguated via type in the current context)
-let a1 : FixedArray[Int] = [1, 2, 3]
-let a2 : ReadOnlyArray[Int] = [1, 2, 3]
-let a3 : ArrayView[Int] = [1, 2, 3]
+```mbt check
+///|
+test "array literals overloading" {
+  let a0 : Array[Int] = [1, 2, 3] // resizable
+  // Array literal overloading: disambiguated via type in the current context
+  let a1 : FixedArray[Int] = [1, 2, 3]
+  let a2 : ReadOnlyArray[Int] = [1, 2, 3]
+  let a3 : ArrayView[Int] = [1, 2, 3]
+
+}
 ```
 
 ## String
@@ -286,46 +290,51 @@ MoonBit's String is immutable utf16 encoded, `s.code_unit_at(i)` returns a code 
 `s.get_char(i)` returns `Option[Char]`.
 Since MoonBit supports char literal overloading, you can write code snippets like this:
 
-```mbt test
-let s = "hello world"
-let b0 : UInt16 = s.code_unit_at(0)
-assert_true(b0 is ('\n' | 'h' | 'b' | 'a'..='z'))
-// In check mode (expression with explicit type), ('\n' : Int) is valid.
-// Here the compiler knows `s[i]` is Int
+```mbt check
+#warnings("-unused_value")
+test "string indexing and utf8 encode/decode" {
+  let s = "hello world"
+  let b0 : UInt16 = s.code_unit_at(0)
+  assert_true(b0 is ('\n' | 'h' | 'b' | 'a'..='z'))
+  // In check mode (expression with explicit type), ('\n' : Int) is valid.
+  // Here the compiler knows `s[i]` is Int
 
-// Using get_char for Option handling
-let b1 : Char? = s.get_char(0)
-assert_true(b1 is Some('a'..='z'))
+  // Using get_char for Option handling
+  let b1 : Char? = s.get_char(0)
+  assert_true(b1 is Some('a'..='z'))
 
-// ⚠️ Important: Variables won't work with direct indexing
-let eq_char : Char = '='
-// s.code_unit_at(0) == eq_char // ❌ Won't compile - eq_char is not a literal, lhs is UInt while rhs is Char
-// Use: s.code_unit_at(0) == '=' or s.get_char(0) == Some(eq_char)
-let bytes = @encoding/utf8.encode("中文") // utf8 encode package is in stdlib
-assert_true(bytes is [0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87])
-let s2 : String = @encoding/utf8.decode(bytes) // decode utf8 bytes back to String
-assert_true(s2 is "中文")
+  // ⚠️ Important: Variables won't work with direct indexing
+  let eq_char : Char = '='
+  // s.code_unit_at(0) == eq_char // ❌ Won't compile - eq_char is not a literal, lhs is UInt while rhs is Char
+  // Use: s.code_unit_at(0) == '=' or s.get_char(0) == Some(eq_char)
+  let bytes = @encoding/utf8.encode("中文") // utf8 encode package is in stdlib
+  assert_true(bytes is [0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87])
+  let s2 : String = @encoding/utf8.decode(bytes) // decode utf8 bytes back to String
+  assert_true(s2 is "中文")
+}
 ```
 
 #### String Interpolation
 
 MoonBit uses `\{}` for string interpolation:
 
-```mbt test
-let point : Point = { x: 10, y: 20 }
-let name : String = "Moon"
-let config = { "cache": 123 }
-let version = 1.0
-let message = "Hello \{name} v\{version}" // "Hello Moon v1.0"
-let desc = "Point at \{point}" // Uses point.to_string()
-// Works with any type implementing Show
+```mbt check
+test "string interpolation basics" {
+  let point : Point = { x: 10, y: 20 }
+  let name : String = "Moon"
+  let config = { "cache": 123 }
+  let version = 1.0
+  let message = "Hello \{name} v\{version}" // "Hello Moon v1.0"
+  let desc = "Point at \{point}" // Uses point.to_string()
+  // Works with any type implementing Show
 
-// ❌ Wrong - quotes inside interpolation not allowed:
-// println("  - Checking if 'cache' section exists: \{config["cache"]}")
+  // ❌ Wrong - quotes inside interpolation not allowed:
+  // println("  - Checking if 'cache' section exists: \{config["cache"]}")
 
-// ✅ Correct - extract to variable first:
-let has_key = config["cache"] // `"` not allowed in interpolation
-println("  - Checking if 'cache' section exists: \{has_key}")
+  // ✅ Correct - extract to variable first:
+  let has_key = config["cache"] // `"` not allowed in interpolation
+  println("  - Checking if 'cache' section exists: \{has_key}")
+}
 ```
 
 <Important> expressions inside `\{}` can only be basic expressions (no quotes, newlines, or nested interpolations). String literals are not allowed as it makes lexing too difficult.
@@ -333,19 +342,22 @@ println("  - Checking if 'cache' section exists: \{has_key}")
 
 #### Multiple line strings
 
-```mbt test
-let multi_line_string : String =
-  #|Hello
-  #|World
-  #|
-inspect(
-  multi_line_string,
-  content=(
+```mbt check
+///|
+test "multi-line string literals" {
+  let multi_line_string : String =
     #|Hello
     #|World
     #|
-  ), // when multiple line string is passed as argument, `()` wrapper is required
-)
+  inspect(
+    multi_line_string,
+    content=(
+      #|Hello
+      #|World
+      #|
+    ), // when multiple line string is passed as argument, `()` wrapper is required
+  )
+}
 ```
 
 ## Map
@@ -353,36 +365,39 @@ inspect(
 A built-in `Map` type that preserves insertion order (like
 JavaScript's Map):
 
-```mbt test
-// Map literal syntax
-let map : Map[String, Int] = { "a": 1, "b": 2, "c": 3 }
+```mbt check
+///|
+test "map literals and common operations" {
+  // Map literal syntax
+  let map : Map[String, Int] = { "a": 1, "b": 2, "c": 3 }
 
-// Empty map
-let empty : Map[String, Int] = {}
+  // Empty map
+  let empty : Map[String, Int] = {}
 
-// From array of pairs
-let from_pairs : Map[String, Int] = Map::from_array([("x", 1), ("y", 2)])
+  // From array of pairs
+  let from_pairs : Map[String, Int] = Map::from_array([("x", 1), ("y", 2)])
 
-// Set/update value
-map["new-key"] = 3
-map["a"] = 10 // Updates existing key
+  // Set/update value
+  map["new-key"] = 3
+  map["a"] = 10 // Updates existing key
 
-// Get value - returns Option[T]
-assert_eq(map.get("new-key"), Some(3))
-assert_eq(map.get("missing"), None)
+  // Get value - returns Option[T]
+  assert_eq(map.get("new-key"), Some(3))
+  assert_eq(map.get("missing"), None)
 
-// Direct access (panics if key missing)
-let value : Int = map["a"] // value = 10
+  // Direct access (panics if key missing)
+  let value : Int = map["a"] // value = 10
 
-// Iteration preserves insertion order
-for k, v in map {
-  println("\{k}: \{v}") // Prints: a: 10, b: 2, c: 3, new-key: 3
+  // Iteration preserves insertion order
+  for k, v in map {
+    println("\{k}: \{v}") // Prints: a: 10, b: 2, c: 3, new-key: 3
+  }
+
+  // Other common operations
+  map.remove("b")
+  assert_eq(map.contains("b"), false)
+  assert_eq(map.length(), 3)
 }
-
-// Other common operations
-map.remove("b")
-assert_eq(map.contains("b"), false)
-assert_eq(map.length(), 3)
 ```
 
 ## View Types
@@ -603,26 +618,29 @@ fn find_pair(arr : Array[Int], target : Int) -> (Int, Int)? {
 
 `for` loops have unique MoonBit features:
 
-```mbt test
-// For loop with multiple loop variables,
-// i and j are loop state
-let sum_result : Int = for i = 0, sum = 0 {
-  if i <= 10 {
-    continue i + 1, sum + i
-    // update new loop state in a functional way
-  } else { // Continue with new values
-    break sum // Final value when loop completes normally
+```mbt check
+///|
+test "functional for loop control flow" {
+  // For loop with multiple loop variables,
+  // i and j are loop state
+  let sum_result : Int = for i = 0, sum = 0 {
+    if i <= 10 {
+      continue i + 1, sum + i
+      // update new loop state in a functional way
+    } else { // Continue with new values
+      break sum // Final value when loop completes normally
+    }
   }
-}
-inspect(sum_result, content="55")
+  inspect(sum_result, content="55")
 
-// special form with condition and state update in the `for` header
-let sum_result2 : Int = for i = 0, sum = 0; i <= 10; i = i + 1, sum = sum + i {
+  // special form with condition and state update in the `for` header
+  let sum_result2 : Int = for i = 0, sum = 0; i <= 10; i = i + 1, sum = sum + i {
 
-} else {
-  sum
+  } else {
+    sum
+  }
+  inspect(sum_result2, content="55")
 }
-inspect(sum_result2, content="55")
 ```
 
 ## Label and Optional Parameters
@@ -1170,8 +1188,10 @@ block code)
 /// Get the largest element of a non-empty `Array`.
 ///
 /// # Example
-/// ```mbt test
-/// inspect(sum_array([1, 2, 3, 4, 5, 6]), content="21")
+/// ```mbt check
+/// test {
+///  inspect(sum_array([1, 2, 3, 4, 5, 6]), content="21")
+/// }
 /// ```
 ///
 /// # Panics
@@ -1240,8 +1260,9 @@ The MoonBit code in docstring will be type checked and tested automatically.
 ## MoonBit Package `README` Generation Guide
 
 - Output `README.mbt.md` in the package directory. 
-  `*.mbt.md` file treats `mbt test` and `mbt check` specially, `mbt test` block will be wrapped using `test { ... }` and run by `moon check` and `moon test`.
+  `*.mbt.md` file and docstring contents treats `mbt check` specially.
   `mbt check` block will be included directly as code and also run by `moon check` and `moon test`. 
+  In docstrings, `mbt check` should only contain test blocks.
   If you are only referencing types from the package, you should use `mbt` which will only be syntax highlighted.
   Symlink `README.mbt.md` to `README.md` to adapt to systems that expect `README.md`. 
 - Aim to cover ≥90% of the public API with concise sections and examples.
