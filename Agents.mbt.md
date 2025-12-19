@@ -245,13 +245,12 @@ MoonBit supports Byte, Int16, Int, UInt16, UInt, Int64, UInt64, etc. When the ty
 the literal can be overloaded:
 
 ```mbt check
-test "integer and char literal overloading" {
+test "integer and char literal overloading disambiguation via type in the current context" {
   let a0 = 1 // a is Int by default
   let (int, uint, uint16, int64, byte) : (Int, UInt, UInt16, Int64, Byte) = (
     1, 1, 1, 1, 1,
   )
   assert_eq(int, uint16.to_int())
-  // when the type is known, the literal can be overloaded
   let a1 : Int = 'b' // this also works, a5 will be the unicode value
   let a2 : Char = 'b'
 }
@@ -274,9 +273,8 @@ MoonBit Array is resizable array, FixedArray is fixed size array.
 
 ```mbt check
 ///|
-test "array literals overloading" {
+test "array literals overloading: disambiguation via type in the current context" {
   let a0 : Array[Int] = [1, 2, 3] // resizable
-  // Array literal overloading: disambiguated via type in the current context
   let a1 : FixedArray[Int] = [1, 2, 3]
   let a2 : ReadOnlyArray[Int] = [1, 2, 3]
   let a3 : ArrayView[Int] = [1, 2, 3]
@@ -286,7 +284,7 @@ test "array literals overloading" {
 
 ## String
 
-MoonBit's String is immutable utf16 encoded, `s.code_unit_at(i)` returns a code unit (UInt16),
+MoonBit's String is immutable utf16 encoded, `s[i]` returns a code unit (UInt16),
 `s.get_char(i)` returns `Option[Char]`.
 Since MoonBit supports char literal overloading, you can write code snippets like this:
 
@@ -294,7 +292,7 @@ Since MoonBit supports char literal overloading, you can write code snippets lik
 #warnings("-unused_value")
 test "string indexing and utf8 encode/decode" {
   let s = "hello world"
-  let b0 : UInt16 = s.code_unit_at(0)
+  let b0 : UInt16 = s[0]
   assert_true(b0 is ('\n' | 'h' | 'b' | 'a'..='z'))
   // In check mode (expression with explicit type), ('\n' : Int) is valid.
   // Here the compiler knows `s[i]` is Int
@@ -305,8 +303,8 @@ test "string indexing and utf8 encode/decode" {
 
   // ⚠️ Important: Variables won't work with direct indexing
   let eq_char : Char = '='
-  // s.code_unit_at(0) == eq_char // ❌ Won't compile - eq_char is not a literal, lhs is UInt while rhs is Char
-  // Use: s.code_unit_at(0) == '=' or s.get_char(0) == Some(eq_char)
+  // s[0] == eq_char // ❌ Won't compile - eq_char is not a literal, lhs is UInt while rhs is Char
+  // Use: s[0] == '=' or s.get_char(0) == Some(eq_char)
   let bytes = @encoding/utf8.encode("中文") // utf8 encode package is in stdlib
   assert_true(bytes is [0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87])
   let s2 : String = @encoding/utf8.decode(bytes) // decode utf8 bytes back to String
