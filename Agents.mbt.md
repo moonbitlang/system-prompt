@@ -1282,6 +1282,29 @@ Practical testing guidance for MoonBit. Keep tests black-box by default and rely
 - Errors: Use `try? f()` to get `Result[...]` and `inspect` it when a function may raise.
 - Verify: Run `moon test` (or `-u` to update snapshots) and `moon fmt` afterwards.
 
+## Spec driven Development
+
+- The spec can be written in a readonly `spec.mbt` file (name is conventional, not mandatory) with stub code marked as declarations:
+
+```mbt check
+enum Yaml {
+  Null
+  Bool(Bool)
+  Int(Int)
+  Float(Double)
+  String(String)
+  Sequence(Array[Yaml])
+  Mapping(Map[String, Yaml])
+}
+#declaration_only
+fn parse_yaml(s : String) -> Yaml raise {...}
+```
+- Add `spec_easy_test.mbt`, `spec_difficult_test.mbt` etc to test the spec functions; everything will be type-checked.
+- The AI or students can implement the `declaration_only` functions in different files thanks to our package organization.
+- Run `moon test` to check everything is correct.
+
+Currently `#declaration_only` is only possible for functions, types and methods will be supported in the future.
+
 ## API Discovery with `moon doc`
 
 **CRITICAL**: `moon doc '<query>'` is your PRIMARY tool for discovering available APIs, functions, types, and methods in MoonBit. It is **more powerful and accurate** than `grep_search`, `semantic_search`, or any file-based searching tools. Always prefer `moon doc` over other approaches when exploring what APIs are available.
