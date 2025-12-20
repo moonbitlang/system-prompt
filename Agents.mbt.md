@@ -1302,6 +1302,8 @@ pub fn parse_yaml(s : String) -> Yaml raise {...}
 - The `pub type Yaml` line is an intentionally opaque placeholder; the implementer chooses its representation.
 - Note the spec file can also contain normal code, not just declarations.
 
+# Semantics based CLI tools
+
 ## API Discovery with `moon doc`
 
 **CRITICAL**: `moon doc '<query>'` is your PRIMARY tool for discovering available APIs, functions, types, and methods in MoonBit. It is **more powerful and accurate** than `grep_search`, `semantic_search`, or any file-based searching tools. Always prefer `moon doc` over other approaches when exploring what APIs are available.
@@ -1378,3 +1380,39 @@ pub fn String::rev_find(String, StringView) -> Int?
 # ... more details omitted ...
 
 **Best practice**: When implementing a feature, start with `moon doc` queries to discover available APIs before writing code. This is faster and more accurate than searching through files.
+
+````
+
+## `moon ide peek-def` for Definition Lookup
+
+Use this when you want inline context for a symbol without jumping files.
+
+``` file src/parse.mbt
+L45:|///|
+L46:|fn Parser::read_u32_leb128(self : Parser) -> UInt raise ParseError {
+L47:|  ...
+...:| }
+```
+
+```bash
+$ moon ide peek-def -symbol Parser -loc src/parse.mbt:46:4
+Definition found at file src/parse.mbt
+  | ///|
+2 | priv struct Parser {
+  |             ^^^^^^
+  |   bytes : Bytes
+  |   mut pos : Int
+  | }
+  | 
+  | ///|
+  | fn Parser::new(bytes : Bytes) -> Parser {
+  |   { bytes, pos: 0 }
+  | }
+  | 
+  | ///|
+  | fn Parser::eof(self : Parser) -> Bool {
+  |   self.pos >= self.bytes.length()
+  | }
+  | 
+```
+For the `-loc` argument, the line number must be precise; the column can be approximate since `-symbol` helps locate the position.
