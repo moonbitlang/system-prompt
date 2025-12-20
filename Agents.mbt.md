@@ -1282,28 +1282,25 @@ Practical testing guidance for MoonBit. Keep tests black-box by default and rely
 - Errors: Use `try? f()` to get `Result[...]` and `inspect` it when a function may raise.
 - Verify: Run `moon test` (or `-u` to update snapshots) and `moon fmt` afterwards.
 
-## Spec driven Development
+## Spec-driven Development
 
 - The spec can be written in a readonly `spec.mbt` file (name is conventional, not mandatory) with stub code marked as declarations:
 
 ```mbt check
-enum Yaml {
-  Null
-  Bool(Bool)
-  Int(Int)
-  Float(Double)
-  String(String)
-  Sequence(Array[Yaml])
-  Mapping(Map[String, Yaml])
-}
 #declaration_only
-fn parse_yaml(s : String) -> Yaml raise {...}
+pub type Yaml
+#declaration_only
+pub fn Yaml::to_string(y : Yaml) -> String raise {...}
+#declaration_only
+pub fn parse_yaml(s : String) -> Yaml raise {...}
 ```
 - Add `spec_easy_test.mbt`, `spec_difficult_test.mbt` etc to test the spec functions; everything will be type-checked.
 - The AI or students can implement the `declaration_only` functions in different files thanks to our package organization.
 - Run `moon test` to check everything is correct.
 
-Currently `#declaration_only` is only possible for functions, types and methods will be supported in the future.
+- `#declaration_only` is supported for functions, methods, and types.
+- The `pub type Yaml` line is an intentionally opaque placeholder; the implementer chooses its representation.
+- Note the spec file can also contain normal code, not just declarations.
 
 ## API Discovery with `moon doc`
 
