@@ -643,33 +643,71 @@ test "functional for loop control flow" {
 
 ## Label and Optional Parameters
 
-```mbt check
-///|
-type Window
+Good example: Use labeled and optional parameters
 
-///|
-fn create_window(
-  title~ : String, // Required labeled parameter
-  width? : Int = 800, // Optional labeled parameter with default
-  height? : Int = 600,
-  resizable? : Bool = true,
-) -> Window {
-  ... // `...` is a valid placeholder in MoonBit
+```mbt
+fn g(
+  positional : Int,
+  required~ : Int,
+  optional? : Int,
+  optional_with_default? : Int = 42,
+) -> String {
+  // make sure you understand the types of the arguments really is:
+  let _ : Int = positional
+  let _ : Int = required
+  // let _ : Option[Int] = optional 
+  let _ : Int = optional_with_default
+  "\{positional},\{required},\{optional},\{optional_with_default}"
 }
 
-///|
-/// Only type checked, skipped in test runs
-/// we can skip tests during prototyping and remove it when we fixed it
-#skip
-test "use function with label and optional parameter" {
-  // Call with named arguments in any order
-  let win1 : Window = create_window(title="App", height=400, width=1024)
-  let win2 : Window = create_window(title="Dialog", resizable=false)
-  // Pun syntax for named arguments
-  let width = 1920
-  let height = 1080
-  let win3 : Window = create_window(title="Fullscreen", width~, height~)
-  // Same as width=width, height=height
+test {
+  inspect(g(1, required=2), content="1,2,None,42")
+  inspect(g(1, required=2, optional=3), content="1,2,Some(3),42")
+  inspect(g(1, required=4, optional_with_default=100), content="1,4,None,100")
+}
+```
+
+Misuse: `arg : Type?` is not an optional parameter
+
+```mbt
+fn with_config(a : Int?, b : Int?, c : Int) -> String {
+  // T? is syntactic sugar for Option[T]
+  "\{a},\{b},\{c}"
+}
+
+test {
+  inspect(with_config(None, None, 1), content="None,None,1")
+  inspect(with_config(Some(5), Some(5), 1), content="Some(5),Some(5),1")
+}
+```
+
+Anti pattern: `arg? : Type?` 
+
+```mbt
+// How to fix: declare `(a? : Int, b? : Int = 1)` directly
+fn f(a? : Int?, b? : Int? = Some(1)) -> Unit {...}
+test {
+  // How to fix: call `f(b=2)` directly
+  f(a=None, b=Some(2))
+}
+```
+
+Bad example: `arg : APIOptions`
+
+```mbt
+// Do not use struct to group options.
+struct APIOptions {
+  a : Int?
+}
+
+fn not_idiomatic(opts : APIOptions, arg : Int) -> Unit {
+  ...
+}
+
+test {
+  // Hard to use in call site
+  not_idiomatic({ a: Some(5) }, 10)
+  not_idiomatic({ a: None }, 10)
 }
 ```
 
