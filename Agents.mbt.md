@@ -641,7 +641,7 @@ test "functional for loop control flow" {
 }
 ```
 
-# Label and Optional Parameters
+## Label and Optional Parameters
 
 Good example: Use labeled and optional parameters
 
