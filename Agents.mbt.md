@@ -641,35 +641,46 @@ test "functional for loop control flow" {
 }
 ```
 
-## Label and Optional Parameters
+## Labeled and Optional Parameters
+
+Bad example: not using labeled and optional parameters
 
 ```mbt check
-///|
-type Window
+// Option type is not Optional parameter.
+fn with_option_type(a : Int?, b : Int?) -> String {
+  // T? is syntactic sugar for Option[T]
+  "\{a},\{b}"
+}
+test {
+  inspect(with_option_type(None, None), content="None,None")
+  inspect(with_option_type(Some(5), Some(5)), content="Some(5),Some(5)")
+}
+// Do not use struct to group options.
+struct APIOptions { a : Int? }
+fn not_idiomatic(opts : APIOptions, arg : Int) -> String { ... }
+```
 
-///|
-fn create_window(
-  title~ : String, // Required labeled parameter
-  width? : Int = 800, // Optional labeled parameter with default
-  height? : Int = 600,
-  resizable? : Bool = true,
-) -> Window {
-  ... // `...` is a valid placeholder in MoonBit
+Good example: Use labeled and optional parameters
+
+```mbt check
+fn g(
+  positional : Int,
+  required~ : Int,
+  optional? : Int,
+  optional_with_default? : Int = 42,
+) -> String {
+  // make sure you understand the types of the arguments really is:
+  let _ : Int = positional
+  let _ : Int = required  
+  // let _ : Option[Int] = optional 
+  let _ : Int = optional_with_default  
+  "\{positional},\{required},\{optional},\{optional_with_default}"
 }
 
-///|
-/// Only type checked, skipped in test runs
-/// we can skip tests during prototyping and remove it when we fixed it
-#skip
-test "use function with label and optional parameter" {
-  // Call with named arguments in any order
-  let win1 : Window = create_window(title="App", height=400, width=1024)
-  let win2 : Window = create_window(title="Dialog", resizable=false)
-  // Pun syntax for named arguments
-  let width = 1920
-  let height = 1080
-  let win3 : Window = create_window(title="Fullscreen", width~, height~)
-  // Same as width=width, height=height
+test {
+  inspect(g(1, required=2), content="1,2,None,42")
+  inspect(g(1, required=2, optional=3), content="1,2,Some(3),42")
+  inspect(g(1, required=4, optional_with_default=100), content="1,4,None,100")
 }
 ```
 
