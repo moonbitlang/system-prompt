@@ -641,28 +641,11 @@ test "functional for loop control flow" {
 }
 ```
 
-## Labeled and Optional Parameters
-
-Bad example: not using labeled and optional parameters
-
-```mbt check
-// Option type is not Optional parameter.
-fn with_option_type(a : Int?, b : Int?) -> String {
-  // T? is syntactic sugar for Option[T]
-  "\{a},\{b}"
-}
-test {
-  inspect(with_option_type(None, None), content="None,None")
-  inspect(with_option_type(Some(5), Some(5)), content="Some(5),Some(5)")
-}
-// Do not use struct to group options.
-struct APIOptions { a : Int? }
-fn not_idiomatic(opts : APIOptions, arg : Int) -> String { ... }
-```
+# Label and Optional Parameters
 
 Good example: Use labeled and optional parameters
 
-```mbt check
+```mbt
 fn g(
   positional : Int,
   required~ : Int,
@@ -671,9 +654,9 @@ fn g(
 ) -> String {
   // make sure you understand the types of the arguments really is:
   let _ : Int = positional
-  let _ : Int = required  
+  let _ : Int = required
   // let _ : Option[Int] = optional 
-  let _ : Int = optional_with_default  
+  let _ : Int = optional_with_default
   "\{positional},\{required},\{optional},\{optional_with_default}"
 }
 
@@ -681,6 +664,50 @@ test {
   inspect(g(1, required=2), content="1,2,None,42")
   inspect(g(1, required=2, optional=3), content="1,2,Some(3),42")
   inspect(g(1, required=4, optional_with_default=100), content="1,4,None,100")
+}
+```
+
+Misuse: `arg : Type?` is not an optional parameter
+
+```mbt
+fn with_config(a : Int?, b : Int?, c : Int) -> String {
+  // T? is syntactic sugar for Option[T]
+  "\{a},\{b},\{c}"
+}
+
+test {
+  inspect(with_config(None, None, 1), content="None,None,1")
+  inspect(with_config(Some(5), Some(5), 1), content="Some(5),Some(5),1")
+}
+```
+
+Anti pattern: `arg? : Type?` 
+
+```mbt
+// How to fix: declare `(a? : Int, b? : Int = 1)` directly
+fn f(a? : Int?, b? : Int? = Some(1)) -> Unit {...}
+test {
+  // How to fix: call `f(b=2)` directly
+  f(a=None, b=Some(2))
+}
+```
+
+Bad example: `arg : APIOptions`
+
+```mbt
+// Do not use struct to group options.
+struct APIOptions {
+  a : Int?
+}
+
+fn not_idiomatic(opts : APIOptions, arg : Int) -> Unit {
+  ...
+}
+
+test {
+  // Hard to use in call site
+  not_idiomatic({ a: Some(5) }, 10)
+  not_idiomatic({ a: None }, 10)
 }
 ```
 
