@@ -645,7 +645,7 @@ test "functional for loop control flow" {
 
 Good example: Use labeled and optional parameters
 
-```mbt
+```mbt check
 fn g(
   positional : Int,
   required~ : Int,
@@ -669,7 +669,7 @@ test {
 
 Misuse: `arg : Type?` is not an optional parameter
 
-```mbt
+```mbt check
 fn with_config(a : Int?, b : Int?, c : Int) -> String {
   // T? is syntactic sugar for Option[T]
   "\{a},\{b},\{c}"
@@ -681,11 +681,11 @@ test {
 }
 ```
 
-Anti pattern: `arg? : Type?` 
+Below is anti pattern: `arg? : Type?` 
 
-```mbt
+```mbt check
 // How to fix: declare `(a? : Int, b? : Int = 1)` directly
-fn f(a? : Int?, b? : Int? = Some(1)) -> Unit {...}
+fn f(a? : Int?, b? : Int? = Some(1)) -> Unit {}
 test {
   // How to fix: call `f(b=2)` directly
   f(a=None, b=Some(2))
@@ -694,14 +694,13 @@ test {
 
 Bad example: `arg : APIOptions`
 
-```mbt
+```mbt check
 // Do not use struct to group options.
 struct APIOptions {
   a : Int?
 }
 
 fn not_idiomatic(opts : APIOptions, arg : Int) -> Unit {
-  ...
 }
 
 test {
