@@ -76,9 +76,9 @@ $ tree -P '*.mbti' -I 'internal' --prune ~/.moon/lib/core # ignore internal pack
 ```
 
 **When to use each approach**:
-- Use `moon doc` for interactive API discovery (preferred, see "API Discovery with `moon doc`" section below)
+- Use `moon doc` for interactive API discovery (preferred, see "API Discovery and Code Navigation (`moon doc` + `moon ide`)" section below)
 - Read `.mbti` files directly when you need the complete API surface at once or when working offline
-- Prefer `moon ide outline <path>` over grep-based tools when you need a quick symbol/public API scan; it saves token usage by avoiding loading large files into context.
+- Prefer `moon ide outline <path>` (and `moon ide find-references` for cross-refs) over grep-based tools when you need a quick symbol/public API scan; it saves token usage by avoiding loading large files into context. Use `rg`/`grep` only when outline output is insufficient or unavailable.
 
 **Reading `.mbti` files for API discovery**:
 - **Start with `builtin/pkg.generated.mbti`** - contains core types (String, Int, Array, etc.) and their fundamental APIs
@@ -1352,9 +1352,19 @@ pub fn parse_yaml(s : String) -> Yaml raise {...}
 
 # Semantics based CLI tools
 
-## API Discovery with `moon doc`
+## API Discovery and Code Navigation (`moon doc` + `moon ide`)
 
 **CRITICAL**: `moon doc '<query>'` is your PRIMARY tool for discovering available APIs, functions, types, and methods in MoonBit. It is **more powerful and accurate** than `grep_search`, `semantic_search`, or any file-based searching tools. Always prefer `moon doc` over other approaches when exploring what APIs are available.
+
+For project-local symbols and navigation, use `moon ide outline .` to scan a package, `moon ide find-references <symbol>` to locate usages, and `moon ide peek-def` for inline definition context. These tools avoid loading large files into context and save tokens.
+
+### Example scenarios
+
+- **Adding a new call site**: Use `moon doc "@pkg.fn_name"` to confirm the API signature, then `moon ide find-references fn_name` to mirror existing usage patterns in the codebase.
+- **Tracing a type’s role**: Use `moon ide outline .` to find where a type is defined, then `moon ide find-references TypeName` to see how it flows through functions without opening large files.
+- **Fixing a failing test**: Use `moon ide find-references` on the failing symbol to find the impacted functions, then `moon ide peek-def` to inspect the definition context quickly.
+- **Migrating an API**: Use `moon doc "@pkg"` to list available alternatives, then `moon ide find-references OldType/OldFn` to update all usages consistently.
+- **Exploring unfamiliar package**: Use `moon ide outline .` to map files in the package, then `moon doc "Type::method"` to discover methods before editing.
 
 ### Query Syntax
 
@@ -1431,7 +1441,7 @@ pub fn String::rev_find(String, StringView) -> Int?
 
 ````
 
-## `moon ide peek-def` for Definition Lookup
+### `moon ide peek-def` for Definition Lookup
 
 Use this when you want inline context for a symbol without jumping files.
 
@@ -1465,13 +1475,14 @@ Definition found at file src/parse.mbt
 ```
 For the `-loc` argument, the line number must be precise; the column can be approximate since `-symbol` helps locate the position.
 
-## `moon ide outline` for Package Outline
+### `moon ide outline` and `moon ide find-references` for Package Symbols
 
-Use this to scan a package or file for top-level symbols without opening files.
+Use this to scan a package or file for top-level symbols and locate usages without opening files.
 
 - `moon ide outline dir` outlines the current package directory (per-file headers)
 - `moon ide outline parser.mbt` outlines a single file
 - Useful when you need a quick inventory of a package, or to find the right file before `goto-definition`
+- `moon ide find-references TranslationUnit` finds all references to a symbol in the current module
 
 ```bash
 $ moon ide outline .
@@ -1480,4 +1491,8 @@ spec.mbt:
         ...
  L013 | pub(all) struct Position {
         ...
+```
+
+```bash
+$ moon ide find-references TranslationUnit
 ```
