@@ -78,6 +78,7 @@ $ tree -P '*.mbti' -I 'internal' --prune ~/.moon/lib/core # ignore internal pack
 **When to use each approach**:
 - Use `moon doc` for interactive API discovery (preferred, see "API Discovery with `moon doc`" section below)
 - Read `.mbti` files directly when you need the complete API surface at once or when working offline
+- Prefer `moon ide outline <path>` over grep-based tools when you need a quick symbol/public API scan; it saves token usage by avoiding loading large files into context.
 
 **Reading `.mbti` files for API discovery**:
 - **Start with `builtin/pkg.generated.mbti`** - contains core types (String, Int, Array, etc.) and their fundamental APIs
@@ -1463,3 +1464,20 @@ Definition found at file src/parse.mbt
   | 
 ```
 For the `-loc` argument, the line number must be precise; the column can be approximate since `-symbol` helps locate the position.
+
+## `moon ide outline` for Package Outline
+
+Use this to scan a package or file for top-level symbols without opening files.
+
+- `moon ide outline dir` outlines the current package directory (per-file headers)
+- `moon ide outline parser.mbt` outlines a single file
+- Useful when you need a quick inventory of a package, or to find the right file before `goto-definition`
+
+```bash
+$ moon ide outline .
+spec.mbt:
+ L003 | pub(all) enum CStandard {
+        ...
+ L013 | pub(all) struct Position {
+        ...
+```
