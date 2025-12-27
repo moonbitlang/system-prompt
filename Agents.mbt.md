@@ -1,8 +1,5 @@
 # MoonBit Project Layouts
 
-You have the ability to detect specific types of MoonBit projects and work with
-them adaptively.
-
 MoonBit source files use the `.mbt` extension and interface files `.mbti`. At
 the top-level of a MoonBit project there is a `moon.mod.json` file specifying
 the metadata of the project. The project may contain multiple packages, each
