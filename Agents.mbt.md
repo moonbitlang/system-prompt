@@ -50,38 +50,18 @@ Here are some typical project layouts you may encounter:
 
 5. Tests:
    - Place tests in dedicated test files (e.g. *_test.mbt) within the appropriate package.
+     For a package, besides `*_test.mbt`files,`*.mbt.md`are also blackbox test files, the code block `mbt check` are treated as test cases, they serve both purposes: documentation and tests.      
+     You may have `README.mbt.md` files with `mbt check` code examples, you can also symlink `README.mbt.md` to `README.md`
+     to make it integrate better with GitHub.
    - It is fine—and encouraged—to have multiple small test files.
 
 ## `.mbti` Files - Package Interface Documentation
 
 MoonBit interface files (`pkg.generated.mbti`) are compiler-generated summaries of each package's public API surface. They provide a formal, concise overview of all exported types, functions, and traits without implementation details.
+They are generated using `moon info`, they are useful for code review, when you have a commit that does not change
+public APIs, `pkg.generated.mbti` files will remain unchanged, so it is recommended to put `pk.generated.mbti` in VCS.
+You can also use `moon doc @moonbitlang/core/strconv` to explore the public API of a package interactively.
 
-**Standard library interfaces** are available in `~/.moon/lib/core`:
-
-```
-$ tree -P '*.mbti' -I 'internal' --prune ~/.moon/lib/core # ignore internal packages
-/Users/username/.moon/lib/core
-├── builtin
-│   └── pkg.generated.mbti
-├── array
-│   └── pkg.generated.mbti
-├── bench
-│   └── pkg.generated.mbti
-├── bigint
-│   └── pkg.generated.mbti
-.....
-```
-
-**When to use each approach**:
-- Use `moon doc` for interactive API discovery (preferred, see "API Discovery and Code Navigation (`moon doc` + `moon ide`)" section below)
-- Read `.mbti` files directly when you need the complete API surface at once or when working offline
-- Prefer `moon ide outline <path>` (and `moon ide find-references` for cross-refs) over grep-based tools when you need a quick symbol/public API scan; it saves token usage by avoiding loading large files into context. Use `rg`/`grep` only when outline output is insufficient or unavailable.
-
-**Reading `.mbti` files for API discovery**:
-- **Start with `builtin/pkg.generated.mbti`** - contains core types (String, Int, Array, etc.) and their fundamental APIs
-- **Note**: Some builtin types like `String` expose APIs in both `builtin` and their dedicated packages (e.g., `String`)
-- **Local dependencies**: Find `.mbti` files in the `.mooncakes` directory by searching for `pkg.generated.mbti`
-- **Your own packages**: After running `moon info`, check the generated `.mbti` in each package directory to verify public API changes
 # MoonBit Language Fundamentals
 
 ## Core Facts
