@@ -575,7 +575,7 @@ fn parse_int(s : String, position~ : Position) -> Int raise ParseError {
 /// Just declare `raise` to not track specific error types
 fn div(x : Int, y : Int) -> Int raise {
   if y is 0 {
-    raise Failure("Division by zero")
+    fail("Division by zero")
   }
   x / y
 }
@@ -583,7 +583,7 @@ fn div(x : Int, y : Int) -> Int raise {
 ///|
 test "inspect raise function" {
   let result : Result[Int, Error] = try? div(1, 0) 
-  guard result is Err(Failure(_)) else {
+  guard result is Err(Failure(msg)) && msg.contains("Division by zero") else {
     fail("Expected error")
   }  
 }
@@ -743,18 +743,19 @@ Expressions inside `\{}` can only be _basic expressions_ (no quotes, newlines, o
 
 ```mbt check
 ///|
-test "multi-line string literals" {
-  // it is recommended to use multiple line strings for better readability  
+test "multi-line string literals" {  
   let multi_line_string : String =
-    #|Hello
+    #|Hello "world"
     #|World
     #|
-  @json.inspect(
-    multi_line_string.split("\n").filter(x => !(x.trim() is "")).collect(),
-    content=(
-      ["Hello","World"]
-    ), // when multiple line string is passed as argument, `()` wrapper is required
-  )
+  let multi_line_string_with_interp : String =
+    $|Line 1 ""
+    $|Line 2 \{1+2}
+    $|
+  // no escape in `#|`, 
+  // only escape '\{..}` in `$|`
+  assert_eq(multi_line_string, "Hello \"world\"\nWorld\n")  
+  assert_eq(multi_line_string_with_interp, "Line 1 \"\"\nLine 2 3\n")
 }
 ```
 
@@ -764,10 +765,8 @@ test "multi-line string literals" {
 ///|
 test "map literals and common operations" {
   // Map literal syntax
-  let map : Map[String, Int] = { "a": 1, "b": 2, "c": 3 }
-
-  // Empty map
-  let empty : Map[String, Int] = {}
+  let map : Map[String, Int] = { "a": 1, "b": 2, "c": 3 }  
+  let empty : Map[String, Int] = {} // Empty map, preferred
   let also_empty : Map[String, Int] = Map::new()
   // From array of pairs
   let from_pairs : Map[String, Int] = Map::from_array([("x", 1), ("y", 2)])
@@ -926,7 +925,8 @@ Bad example: `arg : APIOptions` (use labeled optional parameters instead)
 ///|
 /// Do not use struct to group options.
 struct APIOptions {
-  a : Int?
+  width : Int?
+  height : Int?
 }
 
 ///|
@@ -937,8 +937,8 @@ fn not_idiomatic(opts : APIOptions, arg : Int) -> Unit {
 ///|
 test {
   // Hard to use in call site
-  not_idiomatic({ a: Some(5) }, 10)
-  not_idiomatic({ a: None }, 10)
+  not_idiomatic({ width : Some(5), height : None }, 10)
+  not_idiomatic({ width : None, height : None }, 10)
 }
 ```
 
