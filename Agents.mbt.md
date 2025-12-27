@@ -1,3 +1,8 @@
+---
+name: moonbit-agent-guide
+description: Guide for writing, refactoring, and testing MoonBit projects. Use when working in MoonBit modules or packages, organizing MoonBit files, using moon tooling (build/check/test/doc/ide), or following MoonBit-specific layout, documentation, and testing conventions.
+---
+
 # MoonBit Project Layouts
 
 MoonBit source files use the `.mbt` extension and interface files `.mbti`. At
