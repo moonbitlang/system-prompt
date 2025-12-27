@@ -1188,18 +1188,49 @@ Practical testing guidance for MoonBit. Keep tests black-box by default and rely
 - Errors: Use `try? f()` to get `Result[...]` and `inspect` it when a function may raise.
 - Verify: Run `moon test` (or `-u` to update snapshots) and `moon fmt` afterwards.
 
+### Docstring tests
+````mbt check
+///|
+/// Get the largest element of a non-empty `Array`.
+///
+/// # Example
+/// ```mbt check
+/// test {
+///   inspect(sum_array([1, 2, 3, 4, 5, 6]), content="21")
+/// }
+/// ```
+///
+/// # Panics
+/// Panics if the `xs` is empty.
+pub fn sum_array(xs : Array[Int]) -> Int {
+  xs.fold(init=0, (a, b) => a + b)
+}
+````
+
+The MoonBit code in docstring will be type checked and tested automatically.
+(using `moon test --update`)
 ## Spec-driven Development
 
 - The spec can be written in a readonly `spec.mbt` file (name is conventional, not mandatory) with stub code marked as declarations:
 
 ```mbt check
+///|
 #declaration_only
 pub type Yaml
+
+///|
 #declaration_only
-pub fn Yaml::to_string(y : Yaml) -> String raise {...}
+pub fn Yaml::to_string(y : Yaml) -> String raise {
+  ...
+}
+
+///|
 #declaration_only
-pub fn parse_yaml(s : String) -> Yaml raise {...}
+pub fn parse_yaml(s : String) -> Yaml raise {
+  ...
+}
 ```
+
 - Add `spec_easy_test.mbt`, `spec_difficult_test.mbt` etc to test the spec functions; everything will be type-checked(`moon check`).
 - The AI or students can implement the `declaration_only` functions in different files thanks to our package organization.
 - Run `moon test` to check everything is correct.
