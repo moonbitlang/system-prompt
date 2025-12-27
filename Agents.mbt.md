@@ -81,7 +81,7 @@ Core facts that impact how you write and refactor code.
 <Important> Delimit top-level items with `///|` comments so tools can split the file reliably.
 </Important>
 
-Quick reference:
+### Quick reference:
 
 ```mbt check
 ///|
@@ -223,6 +223,7 @@ MoonBit supports Byte, Int16, Int, UInt16, UInt, Int64, UInt64, etc. When the ty
 the literal can be overloaded:
 
 ```mbt check
+///|
 test "integer and char literal overloading disambiguation via type in the current context" {
   let a0 = 1 // a is Int by default
   let (int, uint, uint16, int64, byte) : (Int, UInt, UInt16, Int64, Byte) = (
@@ -238,6 +239,7 @@ test "integer and char literal overloading disambiguation via type in the curren
 Bytes is immutable; Indexing (`b[i]`) returns a `Byte`.
 
 ```mbt check
+///|
 test "bytes literals overloading and indexing" {
   let b0 : Bytes = b"abcd"
   let b1 : Bytes = "abcd" // b" prefix is optional, when we know the type
@@ -263,10 +265,11 @@ test "array literals overloading: disambiguation via type in the current context
 ## String
 
 MoonBit's String is immutable utf16 encoded, `s[i]` returns a code unit (UInt16),
-`s.get_char(i)` returns `Option[Char]`.
+`s.get_char(i)` returns `Char?`.
 Since MoonBit supports char literal overloading, you can write code snippets like this:
 
 ```mbt check
+///|
 #warnings("-unused_value")
 test "string indexing and utf8 encode/decode" {
   let s = "hello world"
@@ -295,6 +298,7 @@ test "string indexing and utf8 encode/decode" {
 MoonBit uses `\{}` for string interpolation:
 
 ```mbt check
+///|
 test "string interpolation basics" {
   let point : Point = { x: 10, y: 20 }
   let name : String = "Moon"
@@ -349,7 +353,7 @@ test "map literals and common operations" {
 
   // Empty map
   let empty : Map[String, Int] = {}
-
+  let also_empty : Map[String, Int] = Map::new()
   // From array of pairs
   let from_pairs : Map[String, Int] = Map::from_array([("x", 1), ("y", 2)])
 
@@ -358,8 +362,9 @@ test "map literals and common operations" {
   map["a"] = 10 // Updates existing key
 
   // Get value - returns Option[T]
-  assert_eq(map.get("new-key"), Some(3))
-  assert_eq(map.get("missing"), None)
+  guard map is { "new-key": 3, "missing"? : None, .. } else {
+    fail("unexpected map contents")
+  }
 
   // Direct access (panics if key missing)
   let value : Int = map["a"] // value = 10
@@ -371,8 +376,10 @@ test "map literals and common operations" {
 
   // Other common operations
   map.remove("b")
-  assert_eq(map.contains("b"), false)
-  assert_eq(map.length(), 3)
+  guard map is { "a": 10, "c": 3, "new-key": 3, .. } && map.length() == 3 else {
+    // "b" is gone, only 3 elements left  
+    fail("unexpected map contents after removal")
+  }
 }
 ```
 
@@ -396,17 +403,17 @@ test "map literals and common operations" {
 - Passing slices to functions without allocation overhead
 - Avoiding unnecessary copies of large sequences
 
-Convert back with `.to_string()`, `.to_bytes()`, or `.to_array()` when you need ownership.
+Convert back with `.to_string()`, `.to_bytes()`, or `.to_array()` when you need ownership. (`moon doc StringView`)
 
 ## Complex Types
 
 ```mbt check
 ///|
-type UserId = Int // Int is aliased to UserId - like symlink
+pub type UserId = Int // Int is aliased to UserId - like symlink
 
 ///|
 ///  Tuple-struct for callback
-struct Handler((String) -> Unit) // A newtype wrapper
+pub struct Handler((String) -> Unit) // A newtype wrapper
 
 ///|
 /// Tuple-struct syntax for single-field newtypes
@@ -426,9 +433,8 @@ struct Addr {
 
 ///|
 /// Structural types with literal syntax
-let config : Addr = {
-  // `Type::` can be omitted if the type is already known
-  // otherwise `Type::{...}`
+let config : Addr = Addr::{
+  // `Type::` can be omitted since the type is already known
   host: "localhost",
   port: 8080,
 }
@@ -440,13 +446,11 @@ enum Tree[T] {
   Node(left~ : Tree[T], T, right~ : Tree[T]) // enum can use labels
 }
 
-// Pattern match on enum variants
-
 ///|
-fn sum_tree(tree : Tree[Int]) -> Int {
+pub fn Tree::sum(tree : Tree[Int]) -> Int {
   match tree {
     Leaf(x) => x
-    Node(left~, x, right~) => sum_tree(left) + x + sum_tree(right)
+    Node(left~, x, right~) => left.sum() + x + right.sum()
   }
 }
 ```
@@ -501,56 +505,53 @@ fn modify_array(arr : Array[Int]) -> Unit {
 }
 
 ///|
-///  Use Ref[T] for explicit mutable references to primitives
-fn swap_values(a : Ref[Int], b : Ref[Int]) -> Unit {
-  let temp = a.val
-  a.val = b.val
-  b.val = temp
-}
-
-///|
-test "ref swap" {
-  let x : Ref[Int] = Ref::new(10)
-  let y : Ref[Int] = Ref::new(20)
-  swap_values(x, y) // x.val is now 20, y.val is now 10
+test "reference semantics" {
+  let counter : Ref[Int] = Ref::{ val: 0 }
+  counter.val += 1
+  assert_true(counter.val is 1)
+  let arr : Array[Int] = [1, 2, 3] // unlike Rust, no `mut` keyword needed
+  modify_array(arr)
+  assert_true(arr[0] is 999)
+  let mut x = 3 // `mut` neeed for re-assignment to the bindings
+  x += 2
+  assert_true(x is 5)
 }
 ```
 
 ## Pattern Matching
 
-MoonBit's pattern matching is comprehensive and exhaustive:
-
 ```mbt check
 ///|
-/// Destructure arrays with rest patterns
-fn process_array(arr : Array[Int]) -> String {
+#warnings("-unused_value")
+test "pattern match over Array, struct and StringView" {
+  let arr : Array[Int] = [10, 20, 25, 30]
   match arr {
-    [] => "empty"
-    [single] => "one: \{single}"
-    [first, .. _middle, last] => "first: \{first}, last: \{last}"
-    // middle is of type ArrayView[Int]
+    [] => ... // empty array
+    [single] => ... // single element
+    [first, .. middle, rest] => {
+      let _ : ArrayView[Int] = middle // middle is ArrayView[Int]  
+      assert_true(first is 10 && middle is [20, 25] && rest is 30)
+    }
   }
-}
+  fn process_point(point : Point) -> Unit {
+    match point {
+      { x: 0, y: 0 } => ...
+      { x, y } if x == y => ...
+      { x, .. } if x < 0 => ...
+      ...
+    }
+  }
+  /// StringView pattern matching for parsing
+  fn is_palindrome(s : StringView) -> Bool {
+    loop s {
+      [] | [_] => true
+      [a, .. rest, b] if a == b => continue rest
+      // a is of type Char, rest is of type StringView
+      _ => false
+    }
+  }
 
-///|
-fn analyze_point(point : Point) -> String {
-  match point {
-    { x: 0, y: 0 } => "origin"
-    { x, y } if x == y => "on diagonal"
-    { x, .. } if x < 0 => "left side"
-    _ => "other"
-  }
-}
 
-///|
-/// StringView pattern matching for parsing
-fn is_palindrome(s : StringView) -> Bool {
-  loop s {
-    [] | [_] => true
-    [a, .. rest, b] if a == b => continue rest
-    // a is of type Char, rest is of type StringView
-    _ => false
-  }
 }
 ```
 
@@ -607,15 +608,13 @@ test "functional for loop control flow" {
       break sum // Final value when loop completes normally
     }
   }
-  inspect(sum_result, content="55")
-
   // special form with condition and state update in the `for` header
   let sum_result2 : Int = for i = 0, sum = 0; i <= 10; i = i + 1, sum = sum + i {
 
   } else {
     sum
   }
-  inspect(sum_result2, content="55")
+  assert_true(sum_result2 is 55 && sum_result is 55)
 }
 ```
 
@@ -624,6 +623,7 @@ test "functional for loop control flow" {
 Good example: use labeled and optional parameters
 
 ```mbt check
+///|
 fn g(
   positional : Int,
   required~ : Int,
@@ -638,6 +638,7 @@ fn g(
   "\{positional},\{required},\{optional},\{optional_with_default}"
 }
 
+///|
 test {
   inspect(g(1, required=2), content="1,2,None,42")
   inspect(g(1, required=2, optional=3), content="1,2,Some(3),42")
@@ -649,10 +650,12 @@ Misuse: `arg : Type?` is not an optional parameter.
 Callers still must pass it (as `None`/`Some(...)`).
 
 ```mbt check
+///|
 fn with_config(a : Int?, b : Int?, c : Int) -> String {
   "\{a},\{b},\{c}"
 }
 
+///|
 test {
   inspect(with_config(None, None, 1), content="None,None,1")
   inspect(with_config(Some(5), Some(5), 1), content="Some(5),Some(5),1")
@@ -663,16 +666,23 @@ Anti-pattern: `arg? : Type?` (no default => double Option).
 If you want a defaulted optional parameter, write `b? : Int = 1`, not `b? : Int? = Some(1)`.
 
 ```mbt check
+///|
 fn f_misuse(a? : Int?, b? : Int = 1) -> Unit {
   let _ : Int?? = a // rarely intended
   let _ : Int = b
+
 }
 // How to fix: declare `(a? : Int, b? : Int = 1)` directly.
+
+///|
 fn f_correct(a? : Int, b? : Int = 1) -> Unit {
   let _ : Int? = a
   let _ : Int = b
+
 }
-test {  
+
+///|
+test {
   f_misuse(b=3)
   f_misuse(a=Some(5), b=2) // works but confusing
   f_correct(b=2)
@@ -683,14 +693,18 @@ test {
 Bad example: `arg : APIOptions` (use labeled optional parameters instead)
 
 ```mbt check
-// Do not use struct to group options.
+///|
+/// Do not use struct to group options.
 struct APIOptions {
   a : Int?
 }
 
+///|
 fn not_idiomatic(opts : APIOptions, arg : Int) -> Unit {
+
 }
 
+///|
 test {
   // Hard to use in call site
   not_idiomatic({ a: Some(5) }, 10)
@@ -723,7 +737,7 @@ pub(all) suberror ParseError {
 /// Functions declare what they can throw
 fn parse_int(s : String) -> Int raise ParseError {
   // 'raise' throws an error
-  if s.is_empty() {
+  if s is "" {
     raise ParseError::InvalidEof
   }
   ... // parsing logic
@@ -731,7 +745,7 @@ fn parse_int(s : String) -> Int raise ParseError {
 
 ///|
 fn div(x : Int, y : Int) -> Int raise {
-  if y == 0 {
+  if y is 0 {
     raise Failure("Division by zero")
   }
   x / y
@@ -796,8 +810,10 @@ fn handle_parse(s : String) -> Int {
   }
 }
 ```
+<Important> When call a function that can raise errors, if you only want to propagate the error, you do NOT need to add any special marker before the call. The compiler infers it automatically.
+</Important>
 
-# Methods and Traits
+## Methods and Traits
 
 Methods use `Type::method_name` syntax, traits require explicit implementation:
 
@@ -858,11 +874,6 @@ struct Vector(Int, Int)
 /// Implement arithmetic operators
 pub impl Add for Vector with add(self, other) {
   Vector(self.0 + other.0, self.1 + other.1)
-}
-
-///|
-pub impl Mul for Vector with mul(self, other) {
-  Vector(self.0 * other.0, self.1 * other.1)
 }
 
 ///|
@@ -940,7 +951,7 @@ pub(open) trait Extendable {}
 11. **Don't add explicit `try` for error-raising functions** - errors propagate automatically (unlike Swift)
 12. **Legacy syntax**: Older code may use `function_name!(...)` or `function_name(...)?` - these are deprecated; use normal calls and `try?` for Result conversion
 
-# MoonBit Build System - Essential Guide
+# MoonBit ToolChain Essentials
 
 ## Idiomatic Project Structure
 
@@ -974,6 +985,7 @@ my_module
 - `moon run cmd/main` - Run main package
 - `moon build` - Build project
 - `moon check` - Type check without building, use it regularly
+- `moon info` - Type check and generate `mbti` files
 - `moon check --target all` - Type check for all backends
 - `moon add package` - Add dependency
 - `moon remove package` - Remove dependency
@@ -984,8 +996,7 @@ my_module
 - `moon test` - Run all tests
 - `moon test --update`
 - `moon test -v` - Verbose output with test names
-- `moon test dirname` - Test specific directory
-- `moon test filename` - Test specific file in a directory
+- `moon test [dirname|filename]` - Test specific directory or file
 - `moon coverage analyze` - Analyze coverage
 
 ## Package Management
@@ -1093,139 +1104,9 @@ To add a new package `fib` under `.`:
      ]
    }
    ```
+For more advanced topics like `conditional compilation`, `link configuration`, `warning control`, and `pre-build commands`, see `references/advanced-moonbit-build.md`.
 
-## Conditional Compilation
 
-Target specific backends/modes in `moon.pkg.json`:
-
-```json
-{
-  "targets": {
-    "wasm_only.mbt": ["wasm"],
-    "js_only.mbt": ["js"],
-    "debug_only.mbt": ["debug"],
-    "wasm_or_js.mbt": ["wasm", "js"], // for wasm or js backend
-    "not_js.mbt": ["not", "js"], // for nonjs backend
-    "complex.mbt": ["or", ["and", "wasm", "release"], ["and", "js", "debug"]] // more complex conditions
-  }
-}
-```
-
-**Available conditions:**
-
-- **Backends**: `"wasm"`, `"wasm-gc"`, `"js"`, `"native"`
-- **Build modes**: `"debug"`, `"release"`
-- **Logical operators**: `"and"`, `"or"`, `"not"`
-
-## Link Configuration
-
-### Basic Linking
-
-```json
-{
-  "link": true, // Enable linking for this package
-  // OR for advanced cases:
-  "link": {
-    "wasm": {
-      "exports": ["hello", "foo:bar"], // Export functions
-      "heap-start-address": 1024, // Memory layout
-      "import-memory": {
-        // Import external memory
-        "module": "env",
-        "name": "memory"
-      },
-      "export-memory-name": "memory" // Export memory with name
-    },
-    "wasm-gc": {
-      "exports": ["hello"],
-      "use-js-builtin-string": true, // JS String Builtin support
-      "imported-string-constants": "_" // String namespace
-    },
-    "js": {
-      "exports": ["hello"],
-      "format": "esm" // "esm", "cjs", or "iife"
-    },
-    "native": {
-      "cc": "gcc", // C compiler
-      "cc-flags": "-O2 -DMOONBIT", // Compile flags
-      "cc-link-flags": "-s" // Link flags
-    }
-  }
-}
-```
-
-## Warning Control
-
-Disable specific warnings in `moon.mod.json` or `moon.pkg.json`:
-
-```json
-{
-  "warn-list": "-2-29" // Disable unused variable (2) & unused package (29)
-}
-```
-
-**Common warning numbers:**
-
-- `1` - Unused function
-- `2` - Unused variable
-- `11` - Partial pattern matching
-- `12` - Unreachable code
-- `29` - Unused package
-
-Use `moonc build-package -warn-help` to see all available warnings.
-
-## Pre-build Commands
-
-Embed external files as MoonBit code:
-
-```json
-{
-  "pre-build": [
-    {
-      "input": "data.txt",
-      "output": "embedded.mbt",
-      "command": ":embed -i $input -o $output --name data --text"
-    },
-    ... // more embed commands
-  ]
-}
-```
-
-Generated code example:
-
-```mbt check
-///|
-let data : String =
-  #|hello,
-  #|world
-  #|
-```
-
-# Documentation
-
-Write documentation using `///` comments (started with `///|` to delimit the
-block code)
-
-```mbt check
-///|
-/// Get the largest element of a non-empty `Array`.
-///
-/// # Example
-/// ```mbt check
-/// test {
-///  inspect(sum_array([1, 2, 3, 4, 5, 6]), content="21")
-/// }
-/// ```
-///
-/// # Panics
-/// Panics if the `xs` is empty.
-pub fn sum_array(xs : Array[Int]) -> Int {
-  xs.fold(init=0, (a, b) => a + b)
-}
-```
-
-The MoonBit code in docstring will be type checked and tested automatically.
-(using `moon test --update`)
 
 # Development Workflow
 
