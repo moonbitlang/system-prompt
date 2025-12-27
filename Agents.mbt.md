@@ -83,8 +83,7 @@ Core facts that impact how you write and refactor code.
 - **Placeholders**: `...` is a valid placeholder in MoonBit code for incomplete implementations.
 - **Global values**: immutable by default and generally require type annotations.
 - **Garbage collection**: MoonBit has a GC, there is no lifetime annotation, there's no ownership system.
-<Important> Delimit top-level items with `///|` comments so tools can split the file reliably.
-</Important>
+- **Delimit top-level items with `///|` comments** so tools can split the file reliably.
 
 ### Quick reference:
 
@@ -266,9 +265,7 @@ test "array literals overloading: disambiguation via type in the current context
 
 }
 ```
-
 ## String
-
 MoonBit's String is immutable utf16 encoded, `s[i]` returns a code unit (UInt16),
 `s.get_char(i)` returns `Char?`.
 Since MoonBit supports char literal overloading, you can write code snippets like this:
@@ -298,7 +295,7 @@ test "string indexing and utf8 encode/decode" {
 }
 ```
 
-#### String Interpolation
+### String Interpolation
 
 MoonBit uses `\{}` for string interpolation:
 
@@ -322,14 +319,15 @@ test "string interpolation basics" {
 }
 ```
 
-<Important> expressions inside `\{}` can only be basic expressions (no quotes, newlines, or nested interpolations). String literals are not allowed as it makes lexing too difficult.
-</Important>
+Expressions inside `\{}` can only be _basic expressions_ (no quotes, newlines, or nested interpolations). String literals are not allowed as it makes lexing too difficult.
 
-#### Multiple line strings
+
+### Multiple line strings
 
 ```mbt check
 ///|
 test "multi-line string literals" {
+  // it is recommended to use multiple line strings for better readability  
   let multi_line_string : String =
     #|Hello
     #|World
