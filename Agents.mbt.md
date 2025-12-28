@@ -825,7 +825,8 @@ enum Tree[T] {
 ///|
 pub fn Tree::sum(tree : Tree[Int]) -> Int {
   match tree {
-    Leaf(x) => x
+    Leaf(x) => x 
+    // we don't need to write Tree::Leaf, when `tree` has a known type
     Node(left~, x, right~) => left.sum() + x + right.sum() // method invoked in dot notation
   }
 }
@@ -884,8 +885,8 @@ test "functional for loop control flow" {
   }
 }
 ```
-You are encouraged to use functional `for` loops instead of imperative loops
-when possible, as they are more concise and easier to reason about.
+You are *STRONGLY ENCOURAGED* to use functional `for` loops instead of imperative loops
+*WHENEVER POSSIBLE*, as they are easier to reason about.
 
 ## Label and Optional Parameters
 
