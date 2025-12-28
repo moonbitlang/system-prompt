@@ -67,23 +67,18 @@ They are generated using `moon info`, they are useful for code review, when you 
 public APIs, `pkg.generated.mbti` files will remain unchanged, so it is recommended to put `pk.generated.mbti` in VCS.
 You can also use `moon doc @moonbitlang/core/strconv` to explore the public API of a package interactively.
 
+# Common Pitfalls to Avoid
 
-# Best Practices and Reference
-
-## Common Pitfalls to Avoid
-
-1. **Don't use uppercase for variables/functions** - compilation error
-2. **Don't forget `mut` for mutable fields** - immutable by default
-3. **Don't assume value semantics** - most types pass by reference
-4. **Don't ignore error handling** - errors must be explicitly handled
-5. **Don't use `return` unnecessarily** - last expression is the return value
-6. **Don't create methods without Type:: prefix** - methods need explicit type prefix
-7. Don't forget to handle array bounds - use get() for safe access
-8. Don't mix up String indexing (returns Int). Use `for char in s {...}` for char iteration
-9. Don't forget @package prefix when calling functions from other packages
-10. Don't use ++ or -- (not supported), use `i = i + 1` or `i += 1`
-11. **Don't add explicit `try` for error-raising functions** - errors propagate automatically (unlike Swift)
-12. **Legacy syntax**: Older code may use `function_name!(...)` or `function_name(...)?` - these are deprecated; use normal calls and `try?` for Result conversion
+- **Don't use uppercase for variables/functions** - compilation error
+- **Don't forget `mut` for mutable record fields** - immutable by default
+- **Don't ignore error handling** - errors must be explicitly handled
+- **Don't use `return` unnecessarily** - last expression is the return value
+- **Don't create methods without Type:: prefix** - methods need explicit type prefix
+- **Don't forget to handle array bounds** - use `get()` for safe access
+- **Don't forget @package prefix when calling functions from other packages**
+- **Don't use ++ or -- (not supported)** - use `i = i + 1` or `i += 1`
+- **Don't add explicit `try` for error-raising functions** - errors propagate automatically (unlike Swift)
+- **Legacy syntax**: Older code may use `function_name!(...)` or `function_name(...)?` - these are deprecated; use normal calls and `try?` for Result conversion
 
 # MoonBit ToolChain Essentials
 
@@ -712,6 +707,10 @@ test "string indexing and utf8 encode/decode" {
   assert_true(bytes is [0xe4, 0xb8, 0xad, 0xe6, 0x96, 0x87])
   let s2 : String = @encoding/utf8.decode(bytes) // decode utf8 bytes back to String
   assert_true(s2 is "中文")
+  for c in "中文" {
+    let _ : Char = c // unicode safe iteration  
+    println("char: \{c}") // iterate over chars
+  }
 }
 ```
 
