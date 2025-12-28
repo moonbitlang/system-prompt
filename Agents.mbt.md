@@ -715,7 +715,7 @@ test "string indexing and utf8 encode/decode" {
 }
 ```
 
-### String Interpolation
+### String Interpolation && StringBuilder
 
 MoonBit uses `\{}` for string interpolation, for custom types, it needs implement trait `Show`
 
@@ -733,6 +733,12 @@ test "string interpolation basics" {
   // ✅ Correct - extract to variable first:
   let has_key = config["cache"] // `"` not allowed in interpolation
   println("  - Checking if 'cache' section exists: \{has_key}")
+  
+  let sb = StringBuilder::new()
+  sb..write_char('[') // dotdot for imperative method chaining
+    ..write_view([1,2,3].map((x) => "\{x}").join(","))
+    ..write_char(']')
+  inspect(sb.to_string(), content="[1,2,3]")
 }
 ```
 
@@ -799,7 +805,7 @@ test "map literals and common operations" {
 
 ## View Types
 
-**Key Concept**: View types (`StringView`, `BytesView`, `ArrayView[T]`) are zero-copy, non-owning read-only slices created with the `[:]` syntax. They don't allocate memory and are ideal for passing sub-sequences without copying data.
+**Key Concept**: View types (`StringView`, `BytesView`, `ArrayView[T]`) are zero-copy, non-owning read-only slices created with the `[:]` syntax. They don't allocate memory and are ideal for passing sub-sequences without copying data, for function which takes String, Bytes, Array, they also take *View(implicit conversion).
 
 - `String` → `StringView` via `s[:]` or `s[start:end]`
 - `Bytes` → `BytesView` via `b[:]` or `b[start:end]`
@@ -818,6 +824,35 @@ test "map literals and common operations" {
 - Avoiding unnecessary copies of large sequences
 
 Convert back with `.to_string()`, `.to_bytes()`, or `.to_array()` when you need ownership. (`moon doc StringView`)
+
+## User defined types(`enum`, `struct`)
+
+```mbt check
+///|
+enum Tree[T] {
+  Leaf(T) // Unlike Rust, no comma here
+  Node(left~ : Tree[T], T, right~ : Tree[T]) // enum can use labels
+} derive(Show, ToJson) // derive traits for Tree
+
+///|
+pub fn Tree::sum(tree : Tree[Int]) -> Int {
+  match tree {
+    Leaf(x) => x
+    Node(left~, x, right~) => left.sum() + x + right.sum() // method invoked in dot notation
+  }
+}
+
+///|
+struct Point {
+  x : Int
+  y : Int
+} derive(Show, ToJson) // derive traits for Point
+
+test "user defined types: enum and struct" {
+  @json.inspect(Point::{ x: 10, y: 20 }, content=({"x":10,"y":20}))
+}
+
+```
 
 ## Functional `for` control flow
 

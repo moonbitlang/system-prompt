@@ -163,20 +163,7 @@ let config : Addr = Addr::{
   port: 8080,
 }
 
-///|
-/// Recursive enum for trees
-enum Tree[T] {
-  Leaf(T)
-  Node(left~ : Tree[T], T, right~ : Tree[T]) // enum can use labels
-}
 
-///|
-pub fn Tree::sum(tree : Tree[Int]) -> Int {
-  match tree {
-    Leaf(x) => x
-    Node(left~, x, right~) => left.sum() + x + right.sum()
-  }
-}
 ```
 
 ## Common Derivable Traits
