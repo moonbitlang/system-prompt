@@ -5,22 +5,19 @@ description: Guide for writing, refactoring, and testing MoonBit projects. Use w
 
 # MoonBit Project Layouts
 
-MoonBit source files use the `.mbt` extension and interface files `.mbti`. At
+MoonBit use the `.mbt` extension and interface files `.mbti`. At
 the top-level of a MoonBit project there is a `moon.mod.json` file specifying
 the metadata of the project. The project may contain multiple packages, each
 with its own `moon.pkg.json` file.
 
-Here are some typical project layouts you may encounter:
+Typical project layouts:
 
-- **Module**: When you see a `moon.mod.json` file in the project directory, you
-  are already in a MoonBit project.
-  A MoonBit *module* is like a Go module.
-  It is a collection of packages, usually corresponding to a repository or project.
+- **Module**:  `moon.mod.json` file in the project directory.
+  A MoonBit *module* is like a Go module,it is a collection of packages in subdirectories, usually corresponding to a repository or project.
   Module boundaries matter for dependency management and import paths.
-  A module contains many packages in subdirectories.
 
-- **Package**: When you see a `moon.pkg.json` file, but not a `moon.mod.json`
-  file, it means you are in a MoonBit package. All subcommands of `moon` will
+- **Package**: a `moon.pkg.json` file per directory. 
+  All subcommands of `moon` will
   still be executed in the directory of the module (where `moon.mod.json` is
   located), not the current package.
   A MoonBit *package* is the actual compilation unit (like a Go package).
@@ -33,6 +30,28 @@ Here are some typical project layouts you may encounter:
   File names do NOT create modules or namespaces.
   You may freely split/merge/move declarations between files in the same package.
   Any declaration in a package can reference any other declaration in that package, regardless of file.
+
+## Project layout example
+
+```
+my_module
+├── moon.mod.json             # Module metadata, source field(optional) specifies the source directory of the module
+├── moon.pkg.json             # Package metadata (each directory is a package like Golang)
+├── README.mbt.md             # Markdown with tested code blocks (`test "..." { ... }`)
+├── README.md -> README.mbt.md
+├── cmd                       # Command line directory
+│   └── main
+│       ├── main.mbt
+│       └── moon.pkg.json     # executable package with {"is_main": true}
+├── liba/                     # Library packages
+│   └── moon.pkg.json         # Referenced by other packages as `@username/my_module/liba`
+│   └── libb/                 # Library packages
+│       └── moon.pkg.json     # Referenced by other packages as `@username/my_module/liba/libb`
+├── user_pkg.mbt              # Root packages, referenced by other packages as `@username/my_module`
+├── user_pkg_wbtest.mbt       # White-box tests (only needed for testing internal private members, similar to Golang's package mypackage)
+└── user_pkg_test.mbt         # Black-box tests
+└── ...                       # More package files, symbols visible to current package (like Golang)
+```
 
 ## Coding/layout rules you MUST follow:
 
@@ -60,12 +79,12 @@ Here are some typical project layouts you may encounter:
      to make it integrate better with GitHub.
    - It is fine—and encouraged—to have multiple small test files.
 
-## `.mbti` Files - Package Interface Documentation
-
-MoonBit interface files (`pkg.generated.mbti`) are compiler-generated summaries of each package's public API surface. They provide a formal, concise overview of all exported types, functions, and traits without implementation details.
-They are generated using `moon info`, they are useful for code review, when you have a commit that does not change
-public APIs, `pkg.generated.mbti` files will remain unchanged, so it is recommended to put `pk.generated.mbti` in VCS.
-You can also use `moon doc @moonbitlang/core/strconv` to explore the public API of a package interactively.
+6. Interface files(`pkg.generated.mbti`) 
+   `pkg.generated.mbti` is compiler-generated summaries of each package's public API surface. They provide a formal, concise overview of all exported types, functions, and traits without implementation details.
+   They are generated using `moon info`, useful for code review, when you have a commit that does not change public APIs, `pkg.generated.mbti` files will remain unchanged, so it is recommended to put `pk.generated.mbti` in version control when you are done.
+   
+   You can also use `moon doc @moonbitlang/core/strconv` to explore the public API of a package interactively and `moon ide peek-def 'Array::join'` to read
+   the definition.
 
 # Common Pitfalls to Avoid
 
@@ -80,33 +99,8 @@ You can also use `moon doc @moonbitlang/core/strconv` to explore the public API 
 - **Don't add explicit `try` for error-raising functions** - errors propagate automatically (unlike Swift)
 - **Legacy syntax**: Older code may use `function_name!(...)` or `function_name(...)?` - these are deprecated; use normal calls and `try?` for Result conversion
 
-# MoonBit ToolChain Essentials
 
-## Idiomatic Project Structure
-
-MoonBit projects use `moon.mod.json` (module descriptor) and `moon.pkg.json`
-(package descriptor):
-
-```
-my_module
-├── Agents.md                 # Guide to Agents
-├── README.mbt.md             # Markdown with tested code blocks (`test "..." { ... }`)
-├── README.md -> README.mbt.md
-├── cmd                       # Command line directory
-│   └── main
-│       ├── main.mbt
-│       └── moon.pkg.json     # executable package with {"is_main": true}
-├── liba/                     # Library packages
-│   └── moon.pkg.json         # Referenced by other packages as `@username/my_module/liba`
-│   └── libb/                 # Library packages
-│       └── moon.pkg.json     # Referenced by other packages as `@username/my_module/liba/libb`
-├── moon.mod.json             # Module metadata, source field(optional) specifies the source directory of the module
-├── moon.pkg.json             # Package metadata (each directory is a package like Golang)
-├── user_pkg.mbt              # Root packages, referenced by other packages as `@username/my_module`
-├── user_pkg_wbtest.mbt       # White-box tests (only needed for testing internal private members, similar to Golang's package mypackage)
-└── user_pkg_test.mbt         # Black-box tests
-└── ...                       # More package files, symbols visible to current package (like Golang)
-```
+# `moon` Essentials
 
 ## Essential Commands
 
@@ -368,9 +362,7 @@ pub fn parse_yaml(s : String) -> Yaml raise {
 - The `pub type Yaml` line is an intentionally opaque placeholder; the implementer chooses its representation.
 - Note the spec file can also contain normal code, not just declarations.
 
-# Semantics based CLI tools
-
-## API Discovery and Code Navigation (`moon doc` + `moon ide`)
+# `moon doc` and `moon ide` for API Discovery and Code Navigation
 
 **CRITICAL**: `moon doc '<query>'` is your PRIMARY tool for discovering available APIs, functions, types, and methods in MoonBit. It is **more powerful and accurate** than `grep_search`, `semantic_search`, or any file-based searching tools. Always prefer `moon doc` over other approaches when exploring what APIs are available.
 
@@ -714,7 +706,7 @@ test "string indexing and utf8 encode/decode" {
 }
 ```
 
-### String Interpolation
+### String Interpolation && StringBuilder
 
 MoonBit uses `\{}` for string interpolation, for custom types, it needs implement trait `Show`
 
@@ -732,6 +724,12 @@ test "string interpolation basics" {
   // ✅ Correct - extract to variable first:
   let has_key = config["cache"] // `"` not allowed in interpolation
   println("  - Checking if 'cache' section exists: \{has_key}")
+  
+  let sb = StringBuilder::new()
+  sb..write_char('[') // dotdot for imperative method chaining
+    ..write_view([1,2,3].map((x) => "\{x}").join(","))
+    ..write_char(']')
+  inspect(sb.to_string(), content="[1,2,3]")
 }
 ```
 
@@ -798,7 +796,7 @@ test "map literals and common operations" {
 
 ## View Types
 
-**Key Concept**: View types (`StringView`, `BytesView`, `ArrayView[T]`) are zero-copy, non-owning read-only slices created with the `[:]` syntax. They don't allocate memory and are ideal for passing sub-sequences without copying data.
+**Key Concept**: View types (`StringView`, `BytesView`, `ArrayView[T]`) are zero-copy, non-owning read-only slices created with the `[:]` syntax. They don't allocate memory and are ideal for passing sub-sequences without copying data, for function which takes String, Bytes, Array, they also take *View(implicit conversion).
 
 - `String` → `StringView` via `s[:]` or `s[start:end]`
 - `Bytes` → `BytesView` via `b[:]` or `b[start:end]`
@@ -818,33 +816,80 @@ test "map literals and common operations" {
 
 Convert back with `.to_string()`, `.to_bytes()`, or `.to_array()` when you need ownership. (`moon doc StringView`)
 
-## Functional `for` control flow
-
+## User defined types(`enum`, `struct`)
 
 ```mbt check
 ///|
-test "functional for loop control flow" {
-  // For loop with multiple loop variables,
-  // i and j are loop state
-  let sum_result : Int = for i = 0, sum = 0 {
-    if i <= 10 {
-      continue i + 1, sum + i
-      // update new loop state in a functional way
-    } else { // Continue with new values
-      break sum // Final value when loop completes normally
+enum Tree[T] {
+  Leaf(T) // Unlike Rust, no comma here
+  Node(left~ : Tree[T], T, right~ : Tree[T]) // enum can use labels
+} derive(Show, ToJson) // derive traits for Tree
+
+///|
+pub fn Tree::sum(tree : Tree[Int]) -> Int {
+  match tree {
+    Leaf(x) => x 
+    // we don't need to write Tree::Leaf, when `tree` has a known type
+    Node(left~, x, right~) => left.sum() + x + right.sum() // method invoked in dot notation
+  }
+}
+
+///|
+struct Point {
+  x : Int
+  y : Int
+} derive(Show, ToJson) // derive traits for Point
+
+test "user defined types: enum and struct" {
+  @json.inspect(Point::{ x: 10, y: 20 }, content=({"x":10,"y":20}))
+}
+
+```
+
+## Functional `for` loop
+
+
+```mbt check
+pub fn binary_search(
+  arr : ArrayView[Int],
+  value : Int,
+) -> Result[Int, Int] {
+  let len = arr.length()
+  // functional for loop:
+  // initial state ; [predicate] ; [post-update] {
+  // loop body with `continue` to update state
+  //} else { // exit block
+  // }
+  // predicate and post-update are optional
+  for i = 0, j = len; i < j; {
+    // post-update is omitted, we use `continue` to update state
+    let h = i + (j - i) / 2
+    if arr[h] < value {
+      continue h + 1, j // functional update of loop state
+    } else {
+      continue i, h // functional update of loop state
+    }
+  } else { // exit of for loop
+    if i < len && arr[i] == value {
+      Ok(i)
+    } else {
+      Err(i)
     }
   }
-  // special form with condition and state update in the `for` header
-  let sum_result2 : Int = for i = 0, sum = 0; i <= 10; i = i + 1, sum = sum + i {
-
-  } else {
-    sum
+}
+///|
+test "functional for loop control flow" {
+  let arr : Array[Int] = [1, 3, 5, 7, 9]
+  inspect(binary_search(arr,5), content="Ok(2)") // Array to ArrayView implicit conversion when passing as arguments
+  inspect(binary_search(arr,6), content="Err(3)")
+  // for iteration is supported too
+  for i, v in arr {
+    println("\{i}: \{v}") // `i` is index, `v` is value
   }
-  assert_true(sum_result2 is 55 && sum_result is 55)
 }
 ```
-You are encouraged to use functional `for` loops instead of imperative loops
-when possible, as they are more concise and easier to reason about.
+You are *STRONGLY ENCOURAGED* to use functional `for` loops instead of imperative loops
+*WHENEVER POSSIBLE*, as they are easier to reason about.
 
 ## Label and Optional Parameters
 
