@@ -5,22 +5,19 @@ description: Guide for writing, refactoring, and testing MoonBit projects. Use w
 
 # MoonBit Project Layouts
 
-MoonBit source files use the `.mbt` extension and interface files `.mbti`. At
+MoonBit use the `.mbt` extension and interface files `.mbti`. At
 the top-level of a MoonBit project there is a `moon.mod.json` file specifying
 the metadata of the project. The project may contain multiple packages, each
 with its own `moon.pkg.json` file.
 
-Here are some typical project layouts you may encounter:
+Typical project layouts:
 
-- **Module**: When you see a `moon.mod.json` file in the project directory, you
-  are already in a MoonBit project.
-  A MoonBit *module* is like a Go module.
-  It is a collection of packages, usually corresponding to a repository or project.
+- **Module**:  `moon.mod.json` file in the project directory.
+  A MoonBit *module* is like a Go module,it is a collection of packages in subdirectories, usually corresponding to a repository or project.
   Module boundaries matter for dependency management and import paths.
-  A module contains many packages in subdirectories.
 
-- **Package**: When you see a `moon.pkg.json` file, but not a `moon.mod.json`
-  file, it means you are in a MoonBit package. All subcommands of `moon` will
+- **Package**: a `moon.pkg.json` file per directory. 
+  All subcommands of `moon` will
   still be executed in the directory of the module (where `moon.mod.json` is
   located), not the current package.
   A MoonBit *package* is the actual compilation unit (like a Go package).
@@ -33,6 +30,28 @@ Here are some typical project layouts you may encounter:
   File names do NOT create modules or namespaces.
   You may freely split/merge/move declarations between files in the same package.
   Any declaration in a package can reference any other declaration in that package, regardless of file.
+
+## Project layout example
+
+```
+my_module
+├── moon.mod.json             # Module metadata, source field(optional) specifies the source directory of the module
+├── moon.pkg.json             # Package metadata (each directory is a package like Golang)
+├── README.mbt.md             # Markdown with tested code blocks (`test "..." { ... }`)
+├── README.md -> README.mbt.md
+├── cmd                       # Command line directory
+│   └── main
+│       ├── main.mbt
+│       └── moon.pkg.json     # executable package with {"is_main": true}
+├── liba/                     # Library packages
+│   └── moon.pkg.json         # Referenced by other packages as `@username/my_module/liba`
+│   └── libb/                 # Library packages
+│       └── moon.pkg.json     # Referenced by other packages as `@username/my_module/liba/libb`
+├── user_pkg.mbt              # Root packages, referenced by other packages as `@username/my_module`
+├── user_pkg_wbtest.mbt       # White-box tests (only needed for testing internal private members, similar to Golang's package mypackage)
+└── user_pkg_test.mbt         # Black-box tests
+└── ...                       # More package files, symbols visible to current package (like Golang)
+```
 
 ## Coding/layout rules you MUST follow:
 
@@ -60,12 +79,12 @@ Here are some typical project layouts you may encounter:
      to make it integrate better with GitHub.
    - It is fine—and encouraged—to have multiple small test files.
 
-## `.mbti` Files - Package Interface Documentation
-
-MoonBit interface files (`pkg.generated.mbti`) are compiler-generated summaries of each package's public API surface. They provide a formal, concise overview of all exported types, functions, and traits without implementation details.
-They are generated using `moon info`, they are useful for code review, when you have a commit that does not change
-public APIs, `pkg.generated.mbti` files will remain unchanged, so it is recommended to put `pk.generated.mbti` in VCS.
-You can also use `moon doc @moonbitlang/core/strconv` to explore the public API of a package interactively.
+6. Interface files(`pkg.generated.mbti`) 
+   `pkg.generated.mbti` is compiler-generated summaries of each package's public API surface. They provide a formal, concise overview of all exported types, functions, and traits without implementation details.
+   They are generated using `moon info`, useful for code review, when you have a commit that does not change public APIs, `pkg.generated.mbti` files will remain unchanged, so it is recommended to put `pk.generated.mbti` in version control when you are done.
+   
+   You can also use `moon doc @moonbitlang/core/strconv` to explore the public API of a package interactively and `moon ide peek-def 'Array::join'` to read
+   the definition.
 
 
 # Best Practices and Reference
@@ -87,31 +106,6 @@ You can also use `moon doc @moonbitlang/core/strconv` to explore the public API 
 
 # MoonBit ToolChain Essentials
 
-## Idiomatic Project Structure
-
-MoonBit projects use `moon.mod.json` (module descriptor) and `moon.pkg.json`
-(package descriptor):
-
-```
-my_module
-├── Agents.md                 # Guide to Agents
-├── README.mbt.md             # Markdown with tested code blocks (`test "..." { ... }`)
-├── README.md -> README.mbt.md
-├── cmd                       # Command line directory
-│   └── main
-│       ├── main.mbt
-│       └── moon.pkg.json     # executable package with {"is_main": true}
-├── liba/                     # Library packages
-│   └── moon.pkg.json         # Referenced by other packages as `@username/my_module/liba`
-│   └── libb/                 # Library packages
-│       └── moon.pkg.json     # Referenced by other packages as `@username/my_module/liba/libb`
-├── moon.mod.json             # Module metadata, source field(optional) specifies the source directory of the module
-├── moon.pkg.json             # Package metadata (each directory is a package like Golang)
-├── user_pkg.mbt              # Root packages, referenced by other packages as `@username/my_module`
-├── user_pkg_wbtest.mbt       # White-box tests (only needed for testing internal private members, similar to Golang's package mypackage)
-└── user_pkg_test.mbt         # Black-box tests
-└── ...                       # More package files, symbols visible to current package (like Golang)
-```
 
 ## Essential Commands
 
