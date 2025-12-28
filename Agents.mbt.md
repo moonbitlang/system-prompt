@@ -86,10 +86,7 @@ my_module
    You can also use `moon doc @moonbitlang/core/strconv` to explore the public API of a package interactively and `moon ide peek-def 'Array::join'` to read
    the definition.
 
-
-# Best Practices and Reference
-
-## Common Pitfalls to Avoid
+# Common Pitfalls to Avoid
 
 1. **Don't use uppercase for variables/functions** - compilation error
 2. **Don't forget `mut` for mutable fields** - immutable by default
@@ -104,8 +101,7 @@ my_module
 11. **Don't add explicit `try` for error-raising functions** - errors propagate automatically (unlike Swift)
 12. **Legacy syntax**: Older code may use `function_name!(...)` or `function_name(...)?` - these are deprecated; use normal calls and `try?` for Result conversion
 
-# MoonBit ToolChain Essentials
-
+# `moon` Essentials
 
 ## Essential Commands
 
@@ -367,9 +363,7 @@ pub fn parse_yaml(s : String) -> Yaml raise {
 - The `pub type Yaml` line is an intentionally opaque placeholder; the implementer chooses its representation.
 - Note the spec file can also contain normal code, not just declarations.
 
-# Semantics based CLI tools
-
-## API Discovery and Code Navigation (`moon doc` + `moon ide`)
+# `moon doc` and `moon ide` for API Discovery and Code Navigation
 
 **CRITICAL**: `moon doc '<query>'` is your PRIMARY tool for discovering available APIs, functions, types, and methods in MoonBit. It is **more powerful and accurate** than `grep_search`, `semantic_search`, or any file-based searching tools. Always prefer `moon doc` over other approaches when exploring what APIs are available.
 
@@ -848,29 +842,46 @@ test "user defined types: enum and struct" {
 
 ```
 
-## Functional `for` control flow
+## Functional `for` loop
 
 
 ```mbt check
-///|
-test "functional for loop control flow" {
-  // For loop with multiple loop variables,
-  // i and j are loop state
-  let sum_result : Int = for i = 0, sum = 0 {
-    if i <= 10 {
-      continue i + 1, sum + i
-      // update new loop state in a functional way
-    } else { // Continue with new values
-      break sum // Final value when loop completes normally
+pub fn binary_search(
+  arr : ArrayView[Int],
+  value : Int,
+) -> Result[Int, Int] {
+  let len = arr.length()
+  // functional for loop:
+  // initial state ; [predicate] ; [post-update] {
+  // loop body with `continue` to update state
+  //} else { // exit block
+  // }
+  // predicate and post-update are optional
+  for i = 0, j = len; i < j; {
+    // post-update is omitted, we use `continue` to update state
+    let h = i + (j - i) / 2
+    if arr[h] < value {
+      continue h + 1, j // functional update of loop state
+    } else {
+      continue i, h // functional update of loop state
+    }
+  } else { // exit of for loop
+    if i < len && arr[i] == value {
+      Ok(i)
+    } else {
+      Err(i)
     }
   }
-  // special form with condition and state update in the `for` header
-  let sum_result2 : Int = for i = 0, sum = 0; i <= 10; i = i + 1, sum = sum + i {
-
-  } else {
-    sum
+}
+///|
+test "functional for loop control flow" {
+  let arr : Array[Int] = [1, 3, 5, 7, 9]
+  inspect(binary_search(arr,5), content="Ok(2)") // Array to ArrayView implicit conversion when passing as arguments
+  inspect(binary_search(arr,6), content="Err(3)")
+  // for iteration is supported too
+  for i, v in arr {
+    println("\{i}: \{v}") // `i` is index, `v` is value
   }
-  assert_true(sum_result2 is 55 && sum_result is 55)
 }
 ```
 You are encouraged to use functional `for` loops instead of imperative loops
