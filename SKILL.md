@@ -122,110 +122,6 @@ my_module
 - `moon test [dirname|filename]` - Test specific directory or file
 - `moon coverage analyze` - Analyze coverage
 
-## Package Management
-
-### Adding Dependencies
-
-```sh
-moon add moonbitlang/x        # Add latest version
-moon add moonbitlang/x@0.4.6  # Add specific version
-```
-
-### Updating Dependencies
-
-```sh
-moon update                   # Update package index
-```
-
-### Typical Module configurations (`moon.mod.json`)
-
-```json
-{
-  "name": "username/hello", // Required format for published modules
-  "version": "0.1.0",
-  "source": ".", // Source directory(optional, default: ".")
-  "repository": "", // Git repository URL
-  "keywords": [], // Search keywords
-  "description": "...", // Module description
-  "deps": {
-    // Dependencies from mooncakes.io, using`moon add` to add dependencies
-    "moonbitlang/x": "0.4.6"
-  }
-}
-```
-
-### Typical Package configuration (`moon.pkg.json`)
-
-```json
-{
-  "is_main": true,                 // Creates executable when true
-  "import": [                      // Package dependencies
-    "username/hello/liba",         // Simple import, use @liba.foo() to call functions
-    {
-      "path": "moonbitlang/x/encoding",
-      "alias": "libb"              // Custom alias, use @libb.encode() to call functions
-    }
-  ],
-  "test-import": [...],            // Imports for black-box tests, similar to import
-  "wbtest-import": [...]           // Imports for white-box tests, similar to import (rarely used)
-}
-```
-
-Packages per directory, packages without `moon.pkg.json` are not recognized.
-
-### Package Importing (used in moon.pkg.json)
-
-- **Import format**: `"module_name/package_path"`
-- **Usage**: `@alias.function()` to call imported functions
-- **Default alias**: Last part of path (e.g., `liba` for `username/hello/liba`)
-- **Package reference**: Use `@packagename` in test files to reference the
-  tested package
-
-**Package Alias Rules**:
-
-- Import `"username/hello/liba"` → use `@liba.function()` (default alias is last path segment)
-- Import with custom alias `{"path": "moonbitlang/x/encoding", "alias": "enc"}` → use `@enc.function()`
-- In `_test.mbt` or `_wbtest.mbt` files, the package being tested is auto-imported
-
-Example:
-
-```mbt
-///|
-/// In main.mbt after importing "username/hello/liba" in `moon.pkg.json`
-fn main {
-  println(@liba.hello()) // Calls hello() from liba package
-}
-```
-
-### Using Standard Library (moonbitlang/core)
-
-**MoonBit standard library (moonbitlang/core) packages are automatically imported** - DO NOT add them to dependencies:
-
-- ❌ **DO NOT** use `moon add` to add standard library packages like `moonbitlang/core/strconv`
-- ❌ **DO NOT** add standard library packages to `"deps"` field of `moon.mod.json`
-- ❌ **DO NOT** add standard library packages to `"import"` field of `moon.pkg.json`
-- ✅ **DO** use them directly: `@strconv.parse_int()`, `@list.List`, `@array.fold()`, etc.
-
-If you get an error like "cannot import `moonbitlang/core/strconv`", remove it from imports - it's automatically available.
-
-### Creating Packages
-
-To add a new package `fib` under `.`:
-
-1. Create directory: `./fib/`
-2. Add `./fib/moon.pkg.json`: `{}` -- Minimal valid moon.pkg.json
-3. Add `.mbt` files with your code
-4. Import in dependent packages:
-
-   ```json
-   {
-     "import": [
-        "username/hello/fib",
-        ...
-     ]
-   }
-   ```
-For more advanced topics like `conditional compilation`, `link configuration`, `warning control`, and `pre-build commands`, see `references/advanced-moonbit-build.md`.
 
 ## `README.mbt.md` Generation Guide
 
@@ -450,6 +346,111 @@ spec.mbt:
 ```bash
 $ moon ide find-references TranslationUnit
 ```
+
+## Package Management
+
+### Adding Dependencies
+
+```sh
+moon add moonbitlang/x        # Add latest version
+moon add moonbitlang/x@0.4.6  # Add specific version
+```
+
+### Updating Dependencies
+
+```sh
+moon update                   # Update package index
+```
+
+### Typical Module configurations (`moon.mod.json`)
+
+```json
+{
+  "name": "username/hello", // Required format for published modules
+  "version": "0.1.0",
+  "source": ".", // Source directory(optional, default: ".")
+  "repository": "", // Git repository URL
+  "keywords": [], // Search keywords
+  "description": "...", // Module description
+  "deps": {
+    // Dependencies from mooncakes.io, using`moon add` to add dependencies
+    "moonbitlang/x": "0.4.6"
+  }
+}
+```
+
+### Typical Package configuration (`moon.pkg.json`)
+
+```json
+{
+  "is_main": true,                 // Creates executable when true
+  "import": [                      // Package dependencies
+    "username/hello/liba",         // Simple import, use @liba.foo() to call functions
+    {
+      "path": "moonbitlang/x/encoding",
+      "alias": "libb"              // Custom alias, use @libb.encode() to call functions
+    }
+  ],
+  "test-import": [...],            // Imports for black-box tests, similar to import
+  "wbtest-import": [...]           // Imports for white-box tests, similar to import (rarely used)
+}
+```
+
+Packages per directory, packages without `moon.pkg.json` are not recognized.
+
+### Package Importing (used in moon.pkg.json)
+
+- **Import format**: `"module_name/package_path"`
+- **Usage**: `@alias.function()` to call imported functions
+- **Default alias**: Last part of path (e.g., `liba` for `username/hello/liba`)
+- **Package reference**: Use `@packagename` in test files to reference the
+  tested package
+
+**Package Alias Rules**:
+
+- Import `"username/hello/liba"` → use `@liba.function()` (default alias is last path segment)
+- Import with custom alias `{"path": "moonbitlang/x/encoding", "alias": "enc"}` → use `@enc.function()`
+- In `_test.mbt` or `_wbtest.mbt` files, the package being tested is auto-imported
+
+Example:
+
+```mbt
+///|
+/// In main.mbt after importing "username/hello/liba" in `moon.pkg.json`
+fn main {
+  println(@liba.hello()) // Calls hello() from liba package
+}
+```
+
+### Using Standard Library (moonbitlang/core)
+
+**MoonBit standard library (moonbitlang/core) packages are automatically imported** - DO NOT add them to dependencies:
+
+- ❌ **DO NOT** use `moon add` to add standard library packages like `moonbitlang/core/strconv`
+- ❌ **DO NOT** add standard library packages to `"deps"` field of `moon.mod.json`
+- ❌ **DO NOT** add standard library packages to `"import"` field of `moon.pkg.json`
+- ✅ **DO** use them directly: `@strconv.parse_int()`, `@list.List`, `@array.fold()`, etc.
+
+If you get an error like "cannot import `moonbitlang/core/strconv`", remove it from imports - it's automatically available.
+
+### Creating Packages
+
+To add a new package `fib` under `.`:
+
+1. Create directory: `./fib/`
+2. Add `./fib/moon.pkg.json`: `{}` -- Minimal valid moon.pkg.json
+3. Add `.mbt` files with your code
+4. Import in dependent packages:
+
+   ```json
+   {
+     "import": [
+        "username/hello/fib",
+        ...
+     ]
+   }
+   ```
+For more advanced topics like `conditional compilation`, `link configuration`, `warning control`, and `pre-build commands`, see `references/advanced-moonbit-build.md`.
 
 # MoonBit Language Tour
 
