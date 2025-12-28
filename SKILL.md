@@ -202,13 +202,13 @@ pub fn parse_yaml(s : String) -> Yaml raise {
 - The `pub type Yaml` line is an intentionally opaque placeholder; the implementer chooses its representation.
 - Note the spec file can also contain normal code, not just declarations.
 
-# `moon doc` and `moon ide` for API Discovery and Code Navigation
+# `moon doc` and `moon ide` for API Discovery, Code Navigation and Refactoring
 
-**CRITICAL**: `moon doc '<query>'` is your PRIMARY tool for discovering available APIs, functions, types, and methods in MoonBit. It is **more powerful and accurate** than `grep_search`, `semantic_search`, or any file-based searching tools. Always prefer `moon doc` over other approaches when exploring what APIs are available.
+**CRITICAL**: `moon doc '<query>'` is your PRIMARY tool for discovering available APIs, functions, types, and methods in MoonBit. Always prefer `moon doc` over other approaches when exploring what APIs are available, it is **more powerful and accurate** than `grep_search` or any regex-based searching tools. 
 
 For project-local symbols and navigation, use `moon ide outline .` to scan a package, `moon ide find-references <symbol>` to locate usages, and `moon ide peek-def` for inline definition context. These tools avoid loading large files into context and save tokens.
 
-### Example scenarios
+### `moon doc` `moon ide` example scenarios
 
 - **Adding a new call site**: Use `moon doc "@pkg.fn_name"` to confirm the API signature, then `moon ide find-references fn_name` to mirror existing usage patterns in the codebase.
 - **Tracing a type’s role**: Use `moon ide outline .` to find where a type is defined, then `moon ide find-references TypeName` to see how it flows through functions without opening large files.
@@ -216,35 +216,29 @@ For project-local symbols and navigation, use `moon ide outline .` to scan a pac
 - **Migrating an API**: Use `moon doc "@pkg"` to list available alternatives, then `moon ide find-references OldType/OldFn` to update all usages consistently.
 - **Exploring unfamiliar package**: Use `moon ide outline .` to map files in the package, then `moon doc "Type::method"` to discover methods before editing.
 
-### Query Syntax
+### `moon doc` Query Syntax
 
 `moon doc` uses a specialized query syntax designed for symbol lookup:
-- **Empty query**: `moon doc `
+- **Empty query**: `moon doc ''`
 
-  - In a module: shows all available packages in current module
+  - In a module: shows all available packages in current module, including dependencies and moonbitlang/core
   - In a package: shows all symbols in current package
   - Outside package: shows all available packages
 
-- **Function/value lookup**: `moon doc "[@pkg.]sym"`
+- **Function/value lookup**: `moon doc "[@pkg.]value_or_function_name"`
   
-- **Type lookup**: `moon doc "[@pkg.]Sym"`
+- **Type lookup**: `moon doc "[@pkg.]Type_name"` (builtin type does not need package prefix)
 
-- **Method/field lookup**: `moon doc "[@pkg.]T::sym"`
+- **Method/field lookup**: `moon doc "[@pkg.]Type_name::method_or_field_name"`
 
 - **Package exploration**: `moon doc "@pkg"`
   - Show package `pkg` and list all its exported symbols
   - Example: `moon doc "@json"` - explore entire `@json` package
   - Example: `moon doc "@encoding/utf8"` - explore nested package
 
-### Workflow for API Discovery
+- **Globbing**: Use `*` wildcard for partial matches, e.g. `moon doc "String::*rev*"` to find all String methods with "rev" in their name
 
-1. **Finding functions**: Use `moon doc "@pkg.function_name"` before grep searching
-2. **Exploring packages**: Use `moon doc "@pkg"` to see what's available in a package
-3. **Method discovery**: Use `moon doc "Type::method"` to find methods on types
-4. **Type inspection**: Use `moon doc "TypeName"` to see type definition and methods
-5. **Package exploration**: Use `moon doc ""` at module root to see all available packages, including dependencies and stdlib
-6. **Globbing**: Use `*` wildcard for partial matches, e.g. `moon doc "String::*rev*"` to find all String methods with "rev" in their name
-### Examples
+### `moon doc` Examples
 
 ````bash
 # search for String methods in standard library:
@@ -253,19 +247,15 @@ $ moon doc "String"
 type String
 
   pub fn String::add(String, String) -> String
-  pub fn String::at(String, Int) -> Int
   # ... more methods omitted ...
 
-# list all symbols in a standard library package:
-$ moon doc "@buffer"
+$ moon doc "@buffer" # list all symbols in  package buffer:
 moonbitlang/core/buffer
 
 fn from_array(ArrayView[Byte]) -> Buffer
-fn from_bytes(Bytes) -> Buffer
 # ... more functions omitted ...
 
-# list the specific function in a package:
-$ moon doc "@buffer.new"
+$ moon doc "@buffer.new" # list the specific function in a package:
 package "moonbitlang/core/buffer"
 
 pub fn new(size_hint? : Int) -> Buffer
@@ -274,24 +264,20 @@ pub fn new(size_hint? : Int) -> Buffer
    1.
 # ... more details omitted ...
 
-$ moon doc "String::*rev*"  
+$ moon doc "String::*rev*"  # globbing
 package "moonbitlang/core/string"
 
 pub fn String::rev(String) -> String
   Returns a new string with the characters in reverse order. It respects
-   Unicode characters and surrogate pairs but not grapheme clusters.
+  # ... more
 
 pub fn String::rev_find(String, StringView) -> Int?
-  Returns the offset (charcode index) of the last occurrence of the given
-   substring. If the substring is not found, it returns None.
-
-# ... more details omitted ...
-
+  Returns the offset (charcode index) of the last occurrence of the given  
+  # ... more details omitted ...
+````
 **Best practice**: When implementing a feature, start with `moon doc` queries to discover available APIs before writing code. This is faster and more accurate than searching through files.
 
-````
-
-### `moon ide peek-def` for Definition Lookup
+### `moon ide peek-def sym [-loc filename:line:col]` example
 
 Use this when you want inline context for a symbol without jumping files.
 
@@ -310,25 +296,29 @@ Definition found at file src/parse.mbt
   |             ^^^^^^
   |   bytes : Bytes
   |   mut pos : Int
-  | }
-  | 
-  | ///|
-  | fn Parser::new(bytes : Bytes) -> Parser {
-  |   { bytes, pos: 0 }
-  | }
-  | 
-  | ///|
-  | fn Parser::eof(self : Parser) -> Bool {
-  |   self.pos >= self.bytes.length()
-  | }
+  | }  
   | 
 ```
 For the `-loc` argument, the line number must be precise; the column can be approximate since 
 the positonal argument `Parser` helps locate the position.
 
-### `moon ide outline` and `moon ide find-references` for Package Symbols
+If the sym is toplevel symbol, the location can be omitted:
+````bash
+$ moon ide peek-def String::rev
+Found 1 symbols matching 'String::rev':
 
-Use this to scan a package or file for top-level symbols and locate usages without opening files.
+`pub fn String::rev` in package moonbitlang/core/builtin at /Users/usrname/.moon/lib/core/builtin/string_methods.mbt:1039-1044
+1039 | ///|
+     | /// Returns a new string with the characters in reverse order. It respects
+     | /// Unicode characters and surrogate pairs but not grapheme clusters.
+     | pub fn String::rev(self : String) -> String {
+     |   self[:].rev()
+     | }         
+````
+
+### `moon ide outline [dir|file]` and `moon ide find-references <sym>` for Package Symbols
+
+Use this to scan a package or file for top-level symbols and locate usages without grepping
 
 - `moon ide outline dir` outlines the current package directory (per-file headers)
 - `moon ide outline parser.mbt` outlines a single file
