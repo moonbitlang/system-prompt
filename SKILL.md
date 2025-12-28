@@ -10,28 +10,7 @@ the top-level of a MoonBit project there is a `moon.mod.json` file specifying
 the metadata of the project. The project may contain multiple packages, each
 with its own `moon.pkg.json` file.
 
-Typical project layouts:
-
-- **Module**:  `moon.mod.json` file in the project directory.
-  A MoonBit *module* is like a Go module,it is a collection of packages in subdirectories, usually corresponding to a repository or project.
-  Module boundaries matter for dependency management and import paths.
-
-- **Package**: a `moon.pkg.json` file per directory. 
-  All subcommands of `moon` will
-  still be executed in the directory of the module (where `moon.mod.json` is
-  located), not the current package.
-  A MoonBit *package* is the actual compilation unit (like a Go package).
-  All source files in the same package are concatenated into one unit.
-  The `package` name in the source defines the package, not the file name.
-  Imports refer to module + package paths, NEVER to file names.
-
-- **Files**:
-  A `.mbt` file is just a chunk of source inside a package.
-  File names do NOT create modules or namespaces.
-  You may freely split/merge/move declarations between files in the same package.
-  Any declaration in a package can reference any other declaration in that package, regardless of file.
-
-## Project layout example
+## Example layout
 
 ```
 my_module
@@ -53,6 +32,26 @@ my_module
 └── ...                       # More package files, symbols visible to current package (like Golang)
 ```
 
+- **Module**:  `moon.mod.json` file in the project directory.
+  A MoonBit *module* is like a Go module,it is a collection of packages in subdirectories, usually corresponding to a repository or project.
+  Module boundaries matter for dependency management and import paths.
+
+- **Package**: a `moon.pkg.json` file per directory. 
+  All subcommands of `moon` will
+  still be executed in the directory of the module (where `moon.mod.json` is
+  located), not the current package.
+  A MoonBit *package* is the actual compilation unit (like a Go package).
+  All source files in the same package are concatenated into one unit.
+  The `package` name in the source defines the package, not the file name.
+  Imports refer to module + package paths, NEVER to file names.
+
+- **Files**:
+  A `.mbt` file is just a chunk of source inside a package.
+  File names do NOT create modules or namespaces.
+  You may freely split/merge/move declarations between files in the same package.
+  Any declaration in a package can reference any other declaration in that package, regardless of file.
+
+
 ## Coding/layout rules you MUST follow:
 
 1. Prefer many small, cohesive files over one large file.
@@ -60,7 +59,7 @@ my_module
    - If a file is getting large or unfocused, create a new file and move related declarations into it.
 
 2. You MAY freely move declarations between files inside the same package.
-   - Moving a function/struct/trait between files does not change semantics, as long as its name and pub-ness stay the same.
+   - Each block is separated by `///|`, moving a function/struct/trait between files does not change semantics, as long as its name and pub-ness stay the same, the order of each block is irrelevant too.
    - It is safe to refactor by splitting or merging files inside a package.
 
 3. File names are purely organizational.
@@ -107,8 +106,9 @@ my_module
 - `moon new my_project` - Create new project
 - `moon run cmd/main` - Run main package
 - `moon build` - Build project
-- `moon check` - Type check without building, use it regularly
+- `moon check` - Type check without building, use it REGULARLY, it is fast
 - `moon info` - Type check and generate `mbti` files
+  run it to see if any public interfaces changed.
 - `moon check --target all` - Type check for all backends
 - `moon add package` - Add dependency
 - `moon remove package` - Remove dependency
@@ -117,7 +117,7 @@ my_module
 ### Test Commands
 
 - `moon test` - Run all tests
-- `moon test --update`
+- `moon test --update` - Update snapshots
 - `moon test -v` - Verbose output with test names
 - `moon test [dirname|filename]` - Test specific directory or file
 - `moon coverage analyze` - Analyze coverage
@@ -126,20 +126,18 @@ my_module
 
 ### Adding Dependencies
 
-```bash
+```sh
 moon add moonbitlang/x        # Add latest version
 moon add moonbitlang/x@0.4.6  # Add specific version
 ```
 
 ### Updating Dependencies
 
-```bash
+```sh
 moon update                   # Update package index
 ```
 
-## Key Configuration
-
-### Module (`moon.mod.json`)
+### Typical Module configurations (`moon.mod.json`)
 
 ```json
 {
@@ -156,7 +154,7 @@ moon update                   # Update package index
 }
 ```
 
-### Package (`moon.pkg.json`)
+### Typical Package configuration (`moon.pkg.json`)
 
 ```json
 {
@@ -175,7 +173,7 @@ moon update                   # Update package index
 
 Packages per directory, packages without `moon.pkg.json` are not recognized.
 
-## Package Importing (used in moon.pkg.json)
+### Package Importing (used in moon.pkg.json)
 
 - **Import format**: `"module_name/package_path"`
 - **Usage**: `@alias.function()` to call imported functions
@@ -199,7 +197,7 @@ fn main {
 }
 ```
 
-## Using Standard Library (moonbitlang/core)
+### Using Standard Library (moonbitlang/core)
 
 **MoonBit standard library (moonbitlang/core) packages are automatically imported** - DO NOT add them to dependencies:
 
@@ -210,7 +208,7 @@ fn main {
 
 If you get an error like "cannot import `moonbitlang/core/strconv`", remove it from imports - it's automatically available.
 
-## Creating Packages
+### Creating Packages
 
 To add a new package `fib` under `.`:
 
@@ -229,89 +227,34 @@ To add a new package `fib` under `.`:
    ```
 For more advanced topics like `conditional compilation`, `link configuration`, `warning control`, and `pre-build commands`, see `references/advanced-moonbit-build.md`.
 
-
-
-# Development Workflow
-
-## MoonBit Tips
-
-- MoonBit code is organized in files/block style.
-  A package is composed of a list of files, their order does not matter,
-  keep them separate so that it is easy to focus on critical parts.
-
-  Each block is separated by `///|`, the order of each block is irrelevant too. You can process
-  block by block independently.
-
-  You are encouraged to generate code in a block-by-block manner.
-
-  You are encouraged to search and replace block by block instead of
-  replacing the whole file.
-
-  You are encouraged to keep each file focused.
-
-- SPLIT the large file into small files, the order does not matter.
-
-- Try to keep deprecated blocks in file called `deprecated.mbt` in each
-  directory.
-
-- `moon fmt` is used to format your code properly.
-
-- `moon info` is used to update the generated interface of the package
-  **in current project**. Each package has a generated interface file `.mbti`,
-  it is a brief formal description of the package. If nothing in `.mbti`
-  changes, this means your change does not bring the visible changes to the
-  external package users, it is typically a safe refactoring.
-  **Note**: `moon info` will only work with packages in the current project, and
-  therefore you cannot use `moon info` to generate interface for dependencies
-  like standard library.
-
-- So in the last step, you typically run `moon info && moon fmt` to update the
-  interface and format the code. You also check the diffs of `.mbti` file to see
-  if the changes are expected.
-
-- You should run `moon test` to check the test is passed. MoonBit supports
-  snapshot testing, so in some cases, your changes indeed change the behavior of
-  the code, you should run `moon test --update` to update the snapshot.
-
-- You can run `moon check` to check the code is linted correctly, run it
-  regularly to ensure you are not in a messy state.
-
-- MoonBit packages are organized per directory; each directory has a
-  `moon.pkg.json` listing its dependencies. Each package has its files and
-  blackbox test files (common, ending in `_test.mbt`) and whitebox test files
-  (ending in `_wbtest.mbt`).
-
-- In the toplevel directory, there is a `moon.mod.json` file describing the
-  module and metadata.
-
-## MoonBit Package `README` Generation Guide
+## `README.mbt.md` Generation Guide
 
 - Output `README.mbt.md` in the package directory. 
   `*.mbt.md` file and docstring contents treats `mbt check` specially.
-  `mbt check` block will be included directly as code and also run by `moon check` and `moon test`. 
-  In docstrings, `mbt check` should only contain test blocks.
-  If you are only referencing types from the package, you should use `mbt` which will only be syntax highlighted.
+  `mbt check` block will be included directly as code and also run by `moon check` and `moon test`.  If you don't want the code snippets to be checked, explicit `mbt nocheck` is preferred.
+  If you are only referencing types from the package, you should use `mbt nocheck` which will only be syntax highlighted.
   Symlink `README.mbt.md` to `README.md` to adapt to systems that expect `README.md`. 
-- Aim to cover ≥90% of the public API with concise sections and examples.
-- Organize by feature: construction, consumption, transformation, and key usage tips.
+    
+## Testing Guide
 
-## MoonBit Testing Guide
+Use snapshot tests as it is easy to update when behavior changes.
 
-Practical testing guidance for MoonBit. Keep tests black-box by default and rely on snapshot `inspect(...)`.
-
-- Black-box by default: Call only public APIs via `@package.fn`. Use white-box tests only when private members matter.
-- **Snapshots**: Prefer `inspect(value, content="...")`. If unknown, write `inspect(value)` and run `moon test --update` (or `moon test -u`).
+- **Snapshot Tests**: `inspect(value, content="...")`. If unknown, write `inspect(value)` and run `moon test --update` (or `moon test -u`).
   - Use regular `inspect()` for simple values (uses `Show` trait)
   - Use `@json.inspect()` for complex nested structures (uses `ToJson` trait, produces more readable output)
   - It is encouraged to `inspect` or `@json.inspect` the whole return value of a function if
     the whole return value is not huge, this makes test simple. You need `impl (Show|ToJson) for YourType` or `derive (Show, ToJson)`.
 - **Update workflow**: After changing code that affects output, run `moon test --update` to regenerate snapshots, then review the diffs in your test files (the `content=` parameter will be updated automatically).
+
+- Black-box by default: Call only public APIs via `@package.fn`. Use white-box tests only when private members matter.
 - Grouping: Combine related checks in one `test "..." { ... }` block for speed and clarity.
 - Panics: Name test with prefix `test "panic ..." {...}`; if the call returns a value, wrap it with `ignore(...)` to silence warnings.
 - Errors: Use `try? f()` to get `Result[...]` and `inspect` it when a function may raise.
 - Verify: Run `moon test` (or `-u` to update snapshots) and `moon fmt` afterwards.
 
-### Docstring tests
+### Docstring tests 
+
+Public APIs are encouraged to have docstring tests.
 ````mbt check
 ///|
 /// Get the largest element of a non-empty `Array`.
@@ -331,7 +274,8 @@ pub fn sum_array(xs : Array[Int]) -> Int {
 ````
 
 The MoonBit code in docstring will be type checked and tested automatically.
-(using `moon test --update`)
+(using `moon test --update`). In docstrings, `mbt check` should only contain `test` or `async test`.
+
 ## Spec-driven Development
 
 - The spec can be written in a readonly `spec.mbt` file (name is conventional, not mandatory) with stub code marked as declarations:
