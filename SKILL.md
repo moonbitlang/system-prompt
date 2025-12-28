@@ -303,7 +303,7 @@ L47:|  ...
 ```
 
 ```bash
-$ moon ide peek-def -symbol Parser -loc src/parse.mbt:46:4
+$ moon ide peek-def Parser -loc src/parse.mbt:46:4
 Definition found at file src/parse.mbt
   | ///|
 2 | priv struct Parser {
@@ -323,7 +323,8 @@ Definition found at file src/parse.mbt
   | }
   | 
 ```
-For the `-loc` argument, the line number must be precise; the column can be approximate since `-symbol` helps locate the position.
+For the `-loc` argument, the line number must be precise; the column can be approximate since 
+the positonal argument `Parser` helps locate the position.
 
 ### `moon ide outline` and `moon ide find-references` for Package Symbols
 
