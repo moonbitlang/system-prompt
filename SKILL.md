@@ -202,21 +202,10 @@ pub fn parse_yaml(s : String) -> Yaml raise {
 - The `pub type Yaml` line is an intentionally opaque placeholder; the implementer chooses its representation.
 - Note the spec file can also contain normal code, not just declarations.
 
-# `moon doc` and `moon ide` for API Discovery, Code Navigation and Refactoring
+## `moon doc` for API Discovery
 
 **CRITICAL**: `moon doc '<query>'` is your PRIMARY tool for discovering available APIs, functions, types, and methods in MoonBit. Always prefer `moon doc` over other approaches when exploring what APIs are available, it is **more powerful and accurate** than `grep_search` or any regex-based searching tools. 
 
-For project-local symbols and navigation, use `moon ide outline .` to scan a package, `moon ide find-references <symbol>` to locate usages, and `moon ide peek-def` for inline definition context. These tools avoid loading large files into context and save tokens.
-
-### `moon doc` `moon ide` example scenarios
-
-- **Adding a new call site**: Use `moon doc "@pkg.fn_name"` to confirm the API signature, then `moon ide find-references fn_name` to mirror existing usage patterns in the codebase.
-- **Tracing a type’s role**: Use `moon ide outline .` to find where a type is defined, then `moon ide find-references TypeName` to see how it flows through functions without opening large files.
-- **Fixing a failing test**: Use `moon ide find-references` on the failing symbol to find the impacted functions, then `moon ide peek-def` to inspect the definition context quickly.
-- **Migrating an API**: Use `moon doc "@pkg"` to list available alternatives, then `moon ide find-references OldType/OldFn` to update all usages consistently.
-- **Exploring unfamiliar package**: Use `moon ide outline .` to map files in the package, then `moon doc "Type::method"` to discover methods before editing.
-
-### `moon doc` Query Syntax
 
 `moon doc` uses a specialized query syntax designed for symbol lookup:
 - **Empty query**: `moon doc ''`
@@ -253,29 +242,32 @@ $ moon doc "@buffer" # list all symbols in  package buffer:
 moonbitlang/core/buffer
 
 fn from_array(ArrayView[Byte]) -> Buffer
-# ... more functions omitted ...
+# ... omitted ...
 
 $ moon doc "@buffer.new" # list the specific function in a package:
 package "moonbitlang/core/buffer"
 
 pub fn new(size_hint? : Int) -> Buffer
-  Creates a new extensible buffer with specified initial capacity. If the
-   initial capacity is less than 1, the buffer will be initialized with capacity
-   1.
-# ... more details omitted ...
+  Creates ... omitted ...
+
 
 $ moon doc "String::*rev*"  # globbing
 package "moonbitlang/core/string"
 
 pub fn String::rev(String) -> String
-  Returns a new string with the characters in reverse order. It respects
+  Returns ... omitted ...
   # ... more
 
 pub fn String::rev_find(String, StringView) -> Int?
-  Returns the offset (charcode index) of the last occurrence of the given  
-  # ... more details omitted ...
+  Returns ... omitted ...
 ````
 **Best practice**: When implementing a feature, start with `moon doc` queries to discover available APIs before writing code. This is faster and more accurate than searching through files.
+
+## `moon ide [peek-def|outline|find-references]` for code navigation and refactoring
+
+For project-local symbols and navigation, use `moon ide outline .` to scan a package, `moon ide find-references <symbol>` to locate usages, and `moon ide peek-def` for inline definition context and locate toplevel symbols. 
+
+These tools save tokens and more precise than grepping.
 
 ### `moon ide peek-def sym [-loc filename:line:col]` example
 
