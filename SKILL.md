@@ -267,7 +267,7 @@ pub fn String::rev_find(String, StringView) -> Int?
 
 For project-local symbols and navigation, use `moon ide outline .` to scan a package, `moon ide find-references <symbol>` to locate usages, and `moon ide peek-def` for inline definition context and locate toplevel symbols. 
 
-These tools save tokens and more precise than grepping.
+These tools save tokens and more precise than grepping(grep display results in both definition and call site including comments too).
 
 ### `moon ide peek-def sym [-loc filename:line:col]` example
 
