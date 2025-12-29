@@ -279,7 +279,9 @@ pub fn String::rev_find(String, StringView) -> Int?
 
 ### `moon ide peek-def sym [-loc filename:line:col]` example
 
-Use this when you want inline context for a symbol without jumping files.
+When the user ask: Can you check if `Parser::read_u32_leb128` is implemented correctly?
+
+In this case, You can run `moon ide peek-def Parser::read_u32_leb128` to get the definition context: (this is better than `grep` since it searches the whole project by semantics)
 
 ``` file src/parse.mbt
 L45:|///|
@@ -287,6 +289,7 @@ L46:|fn Parser::read_u32_leb128(self : Parser) -> UInt raise ParseError {
 L47:|  ...
 ...:| }
 ```
+Now you want to see the definition of `Parser` struct, you can run:
 
 ```bash
 $ moon ide peek-def Parser -loc src/parse.mbt:46:4
