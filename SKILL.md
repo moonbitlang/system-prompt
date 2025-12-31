@@ -113,6 +113,7 @@ my_module
 - `moon add package` - Add dependency
 - `moon remove package` - Remove dependency
 - `moon fmt` - Format code
+- Most project-scoped `moon` commands accept `--source-dir <dir>` so you can target a specific module directory; `moon update` is the exception. This avoids accidentally checking only the current working directory in repos with nested modules. Use this when projects are nested, e.g. `moon check --source-dir nested/path`.
 
 ### Test Commands
 
