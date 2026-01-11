@@ -847,7 +847,7 @@ You are *STRONGLY ENCOURAGED* to use functional `for` loops instead of imperativ
 
 ### Loop Invariants with `where` Clause
 
-The `where` clause attaches **machine-checkable invariants** and **human-readable reasoning** to functional `for` loops. This enables formal verification thinking while keeping the code executable.
+The `where` clause attaches **machine-checkable invariants** and **human-readable reasoning** to functional `for` loops. This enables formal verification thinking while keeping the code executable. Note for trivial loops, you are encouraged to convert it into `for .. in` so no reasoning is needed.
 
 **Syntax:**
 ```mbt nocheck
