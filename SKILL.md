@@ -121,8 +121,10 @@ my_module
 - `moon test -v` - Verbose output with test names
 - `moon test [dirname|filename]` - Test specific directory or file
 - `moon coverage analyze` - Analyze coverage
-
-
+- `moon test --filter 'globl'` - Run tests matching filter
+  ```
+  moon test float/float_test.mbt --filter "Float::*"
+  ```
 ## `README.mbt.md` Generation Guide
 
 - Output `README.mbt.md` in the package directory. 
@@ -806,8 +808,29 @@ pub fn binary_search(
     } else {
       Err(i)
     }
+  } where {
+    invariant : 0 <= i && i <= j && j <= len,
+    invariant : i == 0 || arr[i - 1] < value,
+    invariant : j == len || arr[j] >= value,
+    reasoning :
+      #|For a sorted array, the boundary invariants are witnesses:
+      #|  - `arr[i-1] < value` implies all arr[0..i) < value (by sortedness)
+      #|  - `arr[j] >= value` implies all arr[j..len) >= value (by sortedness)
+      #|
+      #|Preservation proof:
+      #|  - When arr[h] < value: new_i = h+1, and arr[new_i - 1] = arr[h] < value ✓
+      #|  - When arr[h] >= value: new_j = h, and arr[new_j] = arr[h] >= value ✓
+      #|
+      #|Termination: j - i decreases each iteration (h is strictly between i and j)
+      #|
+      #|Correctness at exit (i == j):
+      #|  - By invariants: arr[0..i) < value and arr[i..len) >= value
+      #|  - So if value exists, it can only be at index i
+      #|  - If arr[i] != value, then value is absent and i is the insertion point
+      #|
   }
 }
+
 ///|
 test "functional for loop control flow" {
   let arr : Array[Int] = [1, 3, 5, 7, 9]
@@ -821,6 +844,34 @@ test "functional for loop control flow" {
 ```
 You are *STRONGLY ENCOURAGED* to use functional `for` loops instead of imperative loops
 *WHENEVER POSSIBLE*, as they are easier to reason about.
+
+### Loop Invariants with `where` Clause
+
+The `where` clause attaches **machine-checkable invariants** and **human-readable reasoning** to functional `for` loops. This enables formal verification thinking while keeping the code executable.
+
+**Syntax:**
+```mbt nocheck
+for ... {
+  ...
+} where {
+  invariant : <boolean_expr>,   // checked at runtime in debug builds
+  invariant : <boolean_expr>,   // multiple invariants allowed
+  reasoning : <string>         // documentation for proof sketch
+}
+```
+
+**Writing Good Invariants:**
+
+1. **Make them checkable**: Invariants must be valid MoonBit boolean expressions using loop variables and captured values.
+
+2. **Use boundary witnesses**: For properties over ranges (e.g., "all elements in arr[0..i) satisfy P"), check only boundary elements. For sorted arrays, `arr[i-1] < value` implies all `arr[0..i) < value`.
+
+3. **Handle edge cases with `||`**: Use patterns like `i == 0 || arr[i-1] < value` to handle boundary conditions where the check would be out of bounds.
+
+4. **Cover three aspects in reasoning**:
+   - **Preservation**: Why each `continue` maintains the invariants
+   - **Termination**: Why the loop eventually exits (e.g., a decreasing measure)
+   - **Correctness**: Why the invariants at exit imply the desired postcondition
 
 ## Label and Optional Parameters
 
